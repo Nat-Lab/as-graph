@@ -20,8 +20,15 @@
                     <label for="query">Show route propagation by IP, prefix, or ASN:</label>
                     <div class="control">
                         <input type="text" id="query" autocomplete="off" spellcheck="false" placeholder="ASN, IP or prefix...">
-                        <input type="checkbox" id="showleaf">
-                        <label for="showleaf">show all leaf nodes</label>
+                        <select id="level">
+                            <option value="-1" disabled>Select target...</option>
+                            <option value="0">Direct peers/transits</option>
+                            <option value="1" selected>Large ISPs</option>
+                            <option value="2">Large ISPs and direct peers</option>
+                            <option value="3">All ISPs</option>
+                            <option value="4">All ISPs and direct peers</option>
+                            <option value="5">Everything</option>
+                        </select>
                         <button class="button" id="querybtn">Go</a>
                     </div>
                 </div>
@@ -35,6 +42,29 @@
         </div>
     </body>
     <script>
+        const large_isps = [
+            "7018", "3356", "3549", "3320", "3257", "6830", "2914", "5511", "3491", "1239",
+            "6453", "6762", "12956", "1299", "701", "6461", "174", "7922", "6939", "9002",
+            "1273", "2828", "4134", "4837"];
+
+        const ignore_path = [
+            (path) => false,
+            (path) => !path.some(asn => large_isps.includes(asn)),
+            (path) => false,
+            (path) => false,
+            (path) => false,
+            (path) => false
+        ];
+
+        const draw_this = [
+            (path, index) => index == 1,
+            (path, index) => path.slice(index).some(asn => large_isps.includes(asn)),
+            (path, index) => path.slice(index).some(asn => large_isps.includes(asn)) || path.length == 2,
+            (path, index) => index != path.length - 1,
+            (path, index) => index != path.length - 1 || path.length == 2,
+            (path, index) => true
+        ];
+
         var element;
         var display = document.getElementById('display');
         var log = document.getElementById('log');
@@ -42,15 +72,15 @@
         var querybtn = document.getElementById('querybtn');
         var query = document.getElementById('query');
 
-        var showleaf = document.getElementById('showleaf');
+        var level = document.getElementById('level');
 
         query.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
 
         var disable = () => {
-            [querybtn, query].forEach(e => e.disabled = true);
+            [querybtn, query, level].forEach(e => e.disabled = true);
         };
         var enable = () => {
-            [querybtn, query].forEach(e => e.disabled = false);
+            [querybtn, query, level].forEach(e => e.disabled = false);
         };
 
         var m_log = function(msg) {
@@ -94,22 +124,26 @@
 
         var renderByPrefixesOrAddresses = async function (poas) {
             var links = new Set();
+            var lvl = level.value;
+            console.log(lvl);
 
             await Promise.all(poas.map(async poa => {
                 try {
                     m_log(`getGraphByPrefixesOrAddresses: constructing graph with prefix/IP "${poa}"...`);
 
                     var rslt = await ripeGet(`looking-glass/data.json?resource=${poa}`);
-                    var paths = rslt.rrcs.map(rrc => rrc.peers).flat().map(peer => peer.as_path.split(' '));
+                    var paths = rslt.rrcs.map(rrc => rrc.peers).flat().map(peer => peer.as_path.split(' ').reverse());
 
                     paths.forEach(path => {
+                        if (ignore_path[lvl](path)) return;
+
                         var last;
 
                         path.forEach((asn, i, a) => {
-                            if (last && last != asn && (a.length <= 2 || i > 1 || showleaf.checked)) {
+                            if (last && last != asn && draw_this[lvl](a, i)) {
                                 links.add(`AS${asn} [URL="https://bgp.he.net/AS${asn}"]`);
                                 links.add(`AS${last} [URL="https://bgp.he.net/AS${last}"]`);
-                                links.add(`AS${asn}->AS${last}`);
+                                links.add(`AS${last}->AS${asn}`);
                             }
                             last = asn;
                         });
