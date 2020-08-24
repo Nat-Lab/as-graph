@@ -77,9 +77,9 @@
         const draw_this = [
             (path, index) => index == 1,
             (path, index) => path.slice(index).some(asn => large_isps.includes(asn)),
-            (path, index) => path.slice(index).some(asn => large_isps.includes(asn)) || path.length == 2,
+            (path, index) => path.slice(index).some(asn => large_isps.includes(asn)) || index == 1,
             (path, index) => index != path.length - 1,
-            (path, index) => index != path.length - 1 || path.length == 2,
+            (path, index) => index != path.length - 1 || index == 1,
             (path, index) => true,
             (path, index) => path.slice(index).some(asn => targets.value.replace(/(as| )/gi, '').split(',').includes(asn))
         ];
