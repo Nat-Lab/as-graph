@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>as-graph</title>
+        <link rel="stylesheet" href="css/styles.css">
+        <script src="js/viz.js"></script>
+        <script src="js/full.render.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1 class="title">as-graph</h1>
+                <span class="smalltitle">
+                    Simple BGP route propagation debugger.
+                </span>
+            </div>
+            
+            <div class="box controlboxes">
+                <h2 class="subtitle">Controls</h2>
+                <div class="controlbox">
+                    <label for="prefix">Show route propagation for an IP/prefix.</label>
+                    <div class="control">
+                        <input id="prefix" autocomplete="off" spellcheck="false" placeholder="1.1.1.1">
+                        <button id="renderPrefix">Go</button>
+                    </div>
+                </div>
+                <div class="controlbox">
+                    <label for="asn">Or, enter an ASN to show propagations of all its prefixes, combined.</label>
+                    <div class="control">
+                        <input id="asn" autocomplete="off" spellcheck="false" placeholder="AS6939">
+                        <button id="renderAs">Go</button>
+                    </div>
+                </div>
+            </div>
+            <div class="box log">
+                <h2 class="subtitle">Logs</h2>
+                <pre class="log_out" id="log">
+                </pre>
+            </div>
+            <div class="box display" id="display">
+                <h2 class="subtitle">Result</h2>
+            </div>
+        </div>
+    </body>
+    <script>
+        var element;
+        var display = document.getElementById('display');
+        var log = document.getElementById('log');
+
+        var pfxbtn = document.getElementById('renderPrefix');
+        var asbtn = document.getElementById('renderAs');
+        var pfx =  document.getElementById('prefix');
+        var asn =  document.getElementById('asn');
+
+        pfx.addEventListener('keyup', e => { if (e.key === "Enter") { pfxbtn.click(); } } );
+        asn.addEventListener('keyup', e => { if (e.key === "Enter") { asbtn.click(); } } );
+
+        var disable = () => [pfxbtn, asbtn, pfx, asn].forEach(e => e.disabled = true);
+        var enable = () => [pfxbtn, asbtn, pfx, asn].forEach(e => e.disabled = false);
+
+        var m_log = function(msg) {
+            console.log(msg);
+            log.innerText = `[INFO ] ${msg}\n` + log.innerText;
+        }
+
+        var m_err = function(msg) {
+            console.error(msg);
+            log.innerText = `[ERROR] ${msg}\n` + log.innerText;
+        }
+
+        var render = async function (graph) {
+            m_log('render: request render...');
+            var viz = new Viz();
+            if (element) element.remove();
+            try {
+                element = await viz.renderSVGElement(graph);
+                display.appendChild(element);
+                m_log('render: done.');
+
+            } catch(err) {
+                m_err(err);
+            }
+        };
+
+        var ripeGet = function (apiUrl) {
+            return new Promise((resolve, reject) => {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', `https://stat.ripe.net/data/${apiUrl}`);
+                xhr.send();
+                xhr.onload = function () {
+                    if (this.status == 200) {
+                        res = JSON.parse(xhr.response);
+                        if (res.status === 'ok') resolve(res.data);
+                        else reject('API: RIPE API returned not-OK.');
+                    } else reject('API: got non-200 response.');
+                };
+            });
+        }
+
+        var renderByPrefixesOrAddresses = async function (poas) {
+            var links = new Set();
+
+            await Promise.all(poas.map(async poa => {
+                try {
+                    m_log(`getGraphByPrefixesOrAddresses: constructing graph with prefix/IP "${poa}"...`);
+
+                    var rslt = await ripeGet(`looking-glass/data.json?resource=${poa}`);
+                    var paths = rslt.rrcs.map(rrc => rrc.peers).flat().map(peer => peer.as_path.split(' '));
+
+                    paths.forEach(path => {
+                        var last;
+
+                        path.forEach((asn, i, a) => {
+                            if (last && last != asn && (a.length <= 2 || i > 1)) {
+                                links.add(`AS${asn}->AS${last}`);
+                            }
+                            last = asn;
+                        });
+                    });
+
+                    m_log(`getGraphByPrefixesOrAddresses: done: "${poa}".`)
+                } catch (e) {
+                    m_err(err);
+                }
+            }));
+
+            var graph = `digraph{rankdir="LR";${Array.from(links).join(';')}}`;
+
+            render(graph);
+        };
+
+        var renderByAs = async function (as) {
+            var format_ok = false;
+
+            as = as.toUpperCase();
+
+            if(/^[1-9]+[0-9]*/.test(as)) {
+                as = `AS${as}`;
+                format_ok = true;
+            }
+            if (/^AS[1-9]+[0-9]*/.test(as)) format_ok = true;
+            if (!format_ok) {
+                throw 'getPrefixesByAs: bad ASN.';
+            }
+
+            m_log(`getPrefixesByAs: getting prefixes list for ${as}...`);
+
+            var rslt = await ripeGet(`announced-prefixes/data.json?resource=${as}`);
+            var prefixes = rslt.prefixes.map(p => p.prefix);
+
+            m_log(`getPrefixesByAs: done, found ${prefixes.length} prefix(es).`);
+            renderByPrefixesOrAddresses(prefixes);
+        };
+
+        pfxbtn.onclick = async () => {
+            disable();
+            try {
+                await renderByPrefixesOrAddresses([pfx.value]);
+            } catch (e) {
+                m_err(e);
+            }
+            enable();
+        };
+
+        asbtn.onclick = async () => {
+            disable();
+            try {
+                await renderByAs(asn.value);
+            } catch (e) {
+                m_err(e);
+            }
+            enable();
+        };
+
+    </script>
+</html>
