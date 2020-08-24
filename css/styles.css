@@ -53,7 +53,8 @@ img {
 }
 
 .log_out {
-    min-height: 10em;
+    min-height: 15em;
+    max-height: 15em;
     background-color: #eee;
     overflow: scroll;
 }

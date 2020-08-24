@@ -112,6 +112,8 @@
 
                         path.forEach((asn, i, a) => {
                             if (last && last != asn && (a.length <= 2 || i > 1)) {
+                                links.add(`AS${asn} [URL="https://bgp.he.net/AS${asn}"]`);
+                                links.add(`AS${last} [URL="https://bgp.he.net/AS${last}"]`);
                                 links.add(`AS${asn}->AS${last}`);
                             }
                             last = asn;
@@ -120,12 +122,12 @@
 
                     m_log(`getGraphByPrefixesOrAddresses: done: "${poa}".`)
                 } catch (e) {
-                    m_err(err);
+                    m_err(e);
                 }
             }));
 
             var graph = `digraph{rankdir="LR";${Array.from(links).join(';')}}`;
-
+            console.log(graph);
             render(graph);
         };
 
