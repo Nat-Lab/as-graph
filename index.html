@@ -16,29 +16,19 @@
             </div>
             
             <div class="box controlboxes">
-                <h2 class="subtitle">Controls</h2>
                 <div class="controlbox">
-                    <label for="prefix">Show route propagation for an IP/prefix.</label>
+                    <label for="query">Show route propagation for an IP, a prefix, or AS:</label>
                     <div class="control">
-                        <input id="prefix" autocomplete="off" spellcheck="false" placeholder="1.1.1.1">
-                        <button id="renderPrefix">Go</button>
-                    </div>
-                </div>
-                <div class="controlbox">
-                    <label for="asn">Or, enter an ASN to show propagations of all its prefixes, combined.</label>
-                    <div class="control">
-                        <input id="asn" autocomplete="off" spellcheck="false" placeholder="AS6939">
-                        <button id="renderAs">Go</button>
+                        <input id="query" autocomplete="off" spellcheck="false">
+                        <button class="button" href="#" id="querybtn">Go</a>
                     </div>
                 </div>
             </div>
             <div class="box log">
-                <h2 class="subtitle">Logs</h2>
                 <pre class="log_out" id="log">
                 </pre>
             </div>
             <div class="box display" id="display">
-                <h2 class="subtitle">Result</h2>
             </div>
         </div>
     </body>
@@ -47,16 +37,13 @@
         var display = document.getElementById('display');
         var log = document.getElementById('log');
 
-        var pfxbtn = document.getElementById('renderPrefix');
-        var asbtn = document.getElementById('renderAs');
-        var pfx =  document.getElementById('prefix');
-        var asn =  document.getElementById('asn');
+        var querybtn = document.getElementById('querybtn');
+        var query = document.getElementById('query');
 
-        pfx.addEventListener('keyup', e => { if (e.key === "Enter") { pfxbtn.click(); } } );
-        asn.addEventListener('keyup', e => { if (e.key === "Enter") { asbtn.click(); } } );
+        query.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
 
-        var disable = () => [pfxbtn, asbtn, pfx, asn].forEach(e => e.disabled = true);
-        var enable = () => [pfxbtn, asbtn, pfx, asn].forEach(e => e.disabled = false);
+        var disable = () => [querybtn, query].forEach(e => e.disabled = true);
+        var enable = () => [querybtn, query].forEach(e => e.disabled = false);
 
         var m_log = function(msg) {
             console.log(msg);
@@ -154,33 +141,27 @@
             renderByPrefixesOrAddresses(prefixes);
         };
 
-        pfxbtn.onclick = async () => {
+        var doQuery = () => {
             disable();
             try {
-                await renderByPrefixesOrAddresses([pfx.value]);
-            } catch (e) {
-                m_err(e);
+                var hash = window.location.hash.replace('#', '').toUpperCase();
+                if (hash != "") {
+                    query.value = hash;
+                    if (/^AS[1-9]+[0-9]*$/.test(hash)) renderByAs(hash);
+                    else if (/^[1-9]+[0-9]*$/.test(hash)) renderByAs(`AS${hash}`);
+                    else renderByPrefixesOrAddresses([hash]);
+                }
+            } catch (err) {
+                m_err(err);
             }
             enable();
         };
 
-        asbtn.onclick = async () => {
-            disable();
-            try {
-                await renderByAs(asn.value);
-            } catch (e) {
-                m_err(e);
-            }
-            enable();
+        querybtn.onclick = () => {
+            window.location.hash = query.value;
         };
 
-        document.body.onload = () => {
-            var hash = window.location.hash.replace('#', '').toUpperCase();
-            if (hash != "") {
-                if (/^AS[1-9]+[0-9]*/.test(hash)) renderByAs(hash);
-                else renderByPrefixesOrAddresses([hash]);
-            }
-        };
-
+        window.onhashchange = doQuery;
+        document.body.onload = doQuery;
     </script>
 </html>

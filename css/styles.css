@@ -48,8 +48,8 @@ img {
     margin-bottom: 1em;
 }
 
-.subtitle, .controlbox {
-    margin-bottom: .2em;
+.control {
+    margin-top: .5em;
 }
 
 .log_out {
