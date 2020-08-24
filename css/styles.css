@@ -57,3 +57,7 @@ img {
     background-color: #eee;
     overflow: scroll;
 }
+
+button {
+    margin-left: .5em;
+}

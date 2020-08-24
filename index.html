@@ -31,6 +31,7 @@
                             <option value="5">everything</option>
                         </select>
                         <button class="button" id="querybtn">Go</a>
+                        <button class="button" id="ccbtn">Clear cache</a>
                     </div>
                 </div>
             </div>
@@ -65,6 +66,9 @@
             (path, index) => index != path.length - 1 || path.length == 2,
             (path, index) => true
         ];
+
+        var paths_cache = {};
+        var prefixes_cache = {};
 
         var element;
         var display = document.getElementById('display');
@@ -130,10 +134,20 @@
 
             await Promise.all(poas.map(async poa => {
                 try {
-                    m_log(`getGraphByPrefixesOrAddresses: constructing graph with prefix/IP "${poa}"...`);
+                    m_log(`getGraphByPrefixesOrAddresses: constructing graph with prefix/IP ${poa}...`);
 
-                    var rslt = await ripeGet(`looking-glass/data.json?resource=${poa}`);
-                    var paths = rslt.rrcs.map(rrc => rrc.peers).flat().map(peer => peer.as_path.split(' ').reverse());
+                    var paths;
+
+                    m_log(`getGraphByPrefixesOrAddresses: fetching paths for ${poa} from RIPE RIS...`);
+                    if (!paths_cache[poa]) {
+                        var rslt = await ripeGet(`looking-glass/data.json?resource=${poa}`);
+                        paths = rslt.rrcs.map(rrc => rrc.peers).flat().map(peer => peer.as_path.split(' ').reverse());
+                        paths_cache[poa] = paths;
+                        m_log(`getGraphByPrefixesOrAddresses: found ${paths.length} path(s) for ${poa} in RIPE RIS.`);
+                    } else {
+                        paths = paths_cache[poa];
+                        m_log(`getGraphByPrefixesOrAddresses: found ${paths.length} path(s) for ${poa} in RIPE RIS (cached).`);
+                    }
 
                     paths.forEach(path => {
                         if (ignore_path[lvl](path)) return;
@@ -150,7 +164,7 @@
                         });
                     });
 
-                    m_log(`getGraphByPrefixesOrAddresses: done: "${poa}".`)
+                    m_log(`getGraphByPrefixesOrAddresses: done: ${poa}.`)
                 } catch (e) {
                     m_err(e);
                 }
@@ -177,10 +191,17 @@
 
             m_log(`getPrefixesByAs: getting prefixes list for ${as}...`);
 
-            var rslt = await ripeGet(`announced-prefixes/data.json?resource=${as}`);
-            var prefixes = rslt.prefixes.map(p => p.prefix);
+            var prefixes;
 
-            m_log(`getPrefixesByAs: done, found ${prefixes.length} prefix(es).`);
+            if (!prefixes_cache[as]) {
+                var rslt = await ripeGet(`announced-prefixes/data.json?resource=${as}`);
+                prefixes = rslt.prefixes.map(p => p.prefix);
+                prefixes_cache[as] = prefixes;
+                m_log(`getPrefixesByAs: done, found ${prefixes.length} prefix(es).`);
+            } else {
+                prefixes = prefixes_cache[as];
+                m_log(`getPrefixesByAs: done, found ${prefixes.length} prefix(es) (cached).`);
+            }
 
             if (prefixes.length > 200) {
                 if (!confirm(`${as} has a large number of routes (${prefixes.length}), are you sure you want to proceed? Continuing may cause your browser to hang.`)) {
@@ -219,5 +240,11 @@
             m_log('ready.');
             doQuery();
         }
+
+        document.getElementById('ccbtn').onclick = () => {
+            prefixes_cache = {};
+            paths_cache = {};
+            m_log('Cached entries removed.');
+        };
     </script>
 </html>
