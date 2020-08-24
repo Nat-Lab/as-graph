@@ -11,23 +11,24 @@
             <div class="header">
                 <h1 class="title">as-graph</h1>
                 <span class="smalltitle">
-                    Simple BGP route propagation debugger.
+                    BGP route propagation debugger.
                 </span>
-            </div>
-            
+            </div>            
             <div class="box controlboxes">
                 <div class="controlbox">
-                    <label for="query">Show route propagation by IP, prefix, or ASN:</label>
+                    <label for="query">Type an IP address, prefix or ASN to get started:</label>
                     <div class="control">
+                        Show propagation of
                         <input type="text" id="query" autocomplete="off" spellcheck="false" placeholder="ASN, IP or prefix...">
+                        to
                         <select id="level">
-                            <option value="-1" disabled>Select target...</option>
-                            <option value="0">Direct peers/transits</option>
-                            <option value="1" selected>Large ISPs</option>
-                            <option value="2">Large ISPs and direct peers</option>
-                            <option value="3">All ISPs</option>
-                            <option value="4">All ISPs and direct peers</option>
-                            <option value="5">Everything</option>
+                            <option value="-1" disabled>select target...</option>
+                            <option value="0">direct peers/transits</option>
+                            <option value="1" selected>large ISPs</option>
+                            <option value="2">large ISPs and direct peers</option>
+                            <option value="3">all ISPs</option>
+                            <option value="4">all ISPs and direct peers</option>
+                            <option value="5">everything</option>
                         </select>
                         <button class="button" id="querybtn">Go</a>
                     </div>
@@ -214,6 +215,9 @@
             doQuery(query.value)
         };
 
-        document.body.onload = () => doQuery();
+        document.body.onload = () => {
+            m_log('ready.');
+            doQuery();
+        }
     </script>
 </html>

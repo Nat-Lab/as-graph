@@ -1,7 +1,7 @@
 as-graph
 ---
 
-A simple tool uses data from [RIPE RIS](http://ris.ripe.net) to visualize route propagation in a similar format with [bgp.he.net](https://bgp.he.net).
+A simple tool uses data from [RIPE RIS](http://ris.ripe.net) to visualize route propagation with graphs similar to the ones on [bgp.he.net](https://bgp.he.net).
 
 To use it, visit [lab.nat.moe/as-graph/](https://lab.nat.moe/as-graph/). Alternatively, clone this repo and open `index.html`.
 
