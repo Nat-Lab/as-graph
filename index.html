@@ -17,7 +17,7 @@
             
             <div class="box controlboxes">
                 <div class="controlbox">
-                    <label for="query">Show route propagation for an IP, a prefix, or AS:</label>
+                    <label for="query">Show route propagation by IP, prefix, or ASN:</label>
                     <div class="control">
                         <input id="query" autocomplete="off" spellcheck="false">
                         <button class="button" href="#" id="querybtn">Go</a>
@@ -138,6 +138,14 @@
             var prefixes = rslt.prefixes.map(p => p.prefix);
 
             m_log(`getPrefixesByAs: done, found ${prefixes.length} prefix(es).`);
+
+            if (prefixes.length > 50) {
+                if (!confirm(`${as} has a large number of routes (${prefixes.length}), are you sure you want to proceed? Continuing may cause your browser to hang.`)) {
+                    m_log('getPrefixesByAs: aborted.');
+                    return;
+                }
+            }
+
             renderByPrefixesOrAddresses(prefixes);
         };
 
