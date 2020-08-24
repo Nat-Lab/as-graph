@@ -139,7 +139,7 @@
 
             m_log(`getPrefixesByAs: done, found ${prefixes.length} prefix(es).`);
 
-            if (prefixes.length > 50) {
+            if (prefixes.length > 200) {
                 if (!confirm(`${as} has a large number of routes (${prefixes.length}), are you sure you want to proceed? Continuing may cause your browser to hang.`)) {
                     m_log('getPrefixesByAs: aborted.');
                     return;
