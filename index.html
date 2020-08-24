@@ -29,7 +29,9 @@
                             <option value="3">all ISPs</option>
                             <option value="4">all ISPs and direct peers</option>
                             <option value="5">everything</option>
+                            <option value="6">custom target(s)...</option>
                         </select>
+                        <input class="hide" type="text" id="targets" autocomplete="off" spellcheck="false" placeholder="AS6939, AS174, ...">
                         <button class="button" id="querybtn">Go</a>
                         <button class="button" id="ccbtn">Clear cache</a>
                     </div>
@@ -44,29 +46,6 @@
         </div>
     </body>
     <script>
-        const large_isps = [
-            "7018", "3356", "3549", "3320", "3257", "6830", "2914", "5511", "3491", "1239",
-            "6453", "6762", "12956", "1299", "701", "6461", "174", "7922", "6939", "9002",
-            "1273", "2828", "4134", "4837"];
-
-        const ignore_path = [
-            (path) => false,
-            (path) => !path.some(asn => large_isps.includes(asn)),
-            (path) => false,
-            (path) => false,
-            (path) => false,
-            (path) => false
-        ];
-
-        const draw_this = [
-            (path, index) => index == 1,
-            (path, index) => path.slice(index).some(asn => large_isps.includes(asn)),
-            (path, index) => path.slice(index).some(asn => large_isps.includes(asn)) || path.length == 2,
-            (path, index) => index != path.length - 1,
-            (path, index) => index != path.length - 1 || path.length == 2,
-            (path, index) => true
-        ];
-
         var paths_cache = {};
         var prefixes_cache = {};
 
@@ -78,8 +57,40 @@
         var query = document.getElementById('query');
 
         var level = document.getElementById('level');
+        var targets = document.getElementById('targets');
+
+        const large_isps = [
+            "7018", "3356", "3549", "3320", "3257", "6830", "2914", "5511", "3491", "1239",
+            "6453", "6762", "12956", "1299", "701", "6461", "174", "7922", "6939", "9002",
+            "1273", "2828", "4134", "4837"];
+
+        const ignore_path = [
+            (path) => false,
+            (path) => !path.some(asn => large_isps.includes(asn)),
+            (path) => false,
+            (path) => false,
+            (path) => false,
+            (path) => false,
+            (path) => !path.some(asn => targets.value.replace(/(as| )/gi, '').split(',').includes(asn))
+        ];
+
+        const draw_this = [
+            (path, index) => index == 1,
+            (path, index) => path.slice(index).some(asn => large_isps.includes(asn)),
+            (path, index) => path.slice(index).some(asn => large_isps.includes(asn)) || path.length == 2,
+            (path, index) => index != path.length - 1,
+            (path, index) => index != path.length - 1 || path.length == 2,
+            (path, index) => true,
+            (path, index) => path.slice(index).some(asn => targets.value.replace(/(as| )/gi, '').split(',').includes(asn))
+        ];
+
+        level.addEventListener('change', function () {
+            if (this.value === "6") targets.className = '';
+            else targets.className = 'hide';
+        });
 
         query.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
+        targets.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
 
         var disable = () => {
             [querybtn, query, level].forEach(e => e.disabled = true);

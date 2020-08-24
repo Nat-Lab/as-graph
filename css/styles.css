@@ -61,3 +61,11 @@ img {
 button {
     margin-left: .5em;
 }
+
+input {
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.hide {
+    display: none;
+}
