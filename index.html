@@ -115,6 +115,8 @@
             if (element) element.remove();
             try {
                 element = await viz.renderSVGElement(graph);
+                element.setAttribute('width', '100%');
+                element.removeAttribute('height');
                 display.appendChild(element);
                 m_log('render: done.');
 
