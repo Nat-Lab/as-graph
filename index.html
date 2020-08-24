@@ -19,8 +19,10 @@
                 <div class="controlbox">
                     <label for="query">Show route propagation by IP, prefix, or ASN:</label>
                     <div class="control">
-                        <input id="query" autocomplete="off" spellcheck="false">
-                        <button class="button" href="#" id="querybtn">Go</a>
+                        <input type="text" id="query" autocomplete="off" spellcheck="false" placeholder="ASN, IP or prefix...">
+                        <input type="checkbox" id="showleaf">
+                        <label for="showleaf">show all leaf nodes</label>
+                        <button class="button" id="querybtn">Go</a>
                     </div>
                 </div>
             </div>
@@ -40,10 +42,18 @@
         var querybtn = document.getElementById('querybtn');
         var query = document.getElementById('query');
 
+        var showleaf = document.getElementById('showleaf');
+
         query.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
 
-        var disable = () => [querybtn, query].forEach(e => e.disabled = true);
-        var enable = () => [querybtn, query].forEach(e => e.disabled = false);
+        var disable = () => {
+            window.onhashchange = undefined;
+            [querybtn, query].forEach(e => e.disabled = true);
+        };
+        var enable = () => {
+            window.onhashchange = () => doQuery();
+            [querybtn, query].forEach(e => e.disabled = false);
+        };
 
         var m_log = function(msg) {
             console.log(msg);
@@ -98,7 +108,7 @@
                         var last;
 
                         path.forEach((asn, i, a) => {
-                            if (last && last != asn && (a.length <= 2 || i > 1)) {
+                            if (last && last != asn && (a.length <= 2 || i > 1 || showleaf.checked)) {
                                 links.add(`AS${asn} [URL="https://bgp.he.net/AS${asn}"]`);
                                 links.add(`AS${last} [URL="https://bgp.he.net/AS${last}"]`);
                                 links.add(`AS${asn}->AS${last}`);
@@ -149,8 +159,11 @@
             renderByPrefixesOrAddresses(prefixes);
         };
 
-        var doQuery = () => {
+        var doQuery = (target) => {
             disable();
+            if (target) {
+                window.location.hash = `${target}`;
+            }
             try {
                 var hash = window.location.hash.replace('#', '').toUpperCase();
                 if (hash != "") {
@@ -166,10 +179,10 @@
         };
 
         querybtn.onclick = () => {
-            window.location.hash = query.value;
+            doQuery(query.value)
         };
 
-        window.onhashchange = doQuery;
-        document.body.onload = doQuery;
+        window.onhashchange = () => doQuery();
+        document.body.onload = () => doQuery();
     </script>
 </html>
