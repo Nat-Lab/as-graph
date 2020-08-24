@@ -1,0 +1,213 @@
+(function () {
+    var paths_cache = {};
+    var prefixes_cache = {};
+
+    var element;
+    var display = document.getElementById('display');
+    var log = document.getElementById('log');
+
+    var querybtn = document.getElementById('querybtn');
+    var query = document.getElementById('query');
+
+    var level = document.getElementById('level');
+    var targets = document.getElementById('targets');
+
+    const large_isps = [
+        "7018", "3356", "3549", "3320", "3257", "6830", "2914", "5511", "3491", "1239",
+        "6453", "6762", "12956", "1299", "701", "6461", "174", "7922", "6939", "9002",
+        "1273", "2828", "4134", "4837"];
+
+    const ignore_path = [
+        (path) => false,
+        (path) => !path.some(asn => large_isps.includes(asn)),
+        (path) => false,
+        (path) => false,
+        (path) => false,
+        (path) => false,
+        (path) => !path.some(asn => targets.value.replace(/(as| )/gi, '').split(',').includes(asn))
+    ];
+
+    const draw_this = [
+        (path, index) => index == 1,
+        (path, index) => path.slice(index).some(asn => large_isps.includes(asn)),
+        (path, index) => path.slice(index).some(asn => large_isps.includes(asn)) || index == 1,
+        (path, index) => index != path.length - 1,
+        (path, index) => index != path.length - 1 || index == 1,
+        (path, index) => true,
+        (path, index) => path.slice(index).some(asn => targets.value.replace(/(as| )/gi, '').split(',').includes(asn))
+    ];
+
+    level.addEventListener('change', function () {
+        if (this.value === "6") targets.className = '';
+        else targets.className = 'hide';
+    });
+
+    query.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
+    targets.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
+
+    var disable = () => {
+        [querybtn, query, level].forEach(e => e.disabled = true);
+    };
+    var enable = () => {
+        [querybtn, query, level].forEach(e => e.disabled = false);
+    };
+
+    var m_log = function(msg) {
+        console.log(msg);
+        log.innerText = `[INFO ] ${msg}\n` + log.innerText;
+    }
+
+    var m_err = function(msg) {
+        console.error(msg);
+        log.innerText = `[ERROR] ${msg}\n` + log.innerText;
+    }
+
+    var render = async function (graph) {
+        m_log('render: request render...');
+        var viz = new Viz();
+        if (element) element.remove();
+        try {
+            element = await viz.renderSVGElement(graph);
+            element.setAttribute('width', '100%');
+            element.removeAttribute('height');
+            display.appendChild(element);
+            m_log('render: done.');
+
+        } catch(err) {
+            m_err(err);
+        }
+    };
+
+    var ripeGet = function (apiUrl) {
+        return new Promise((resolve, reject) => {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', `https://stat.ripe.net/data/${apiUrl}`);
+            xhr.send();
+            xhr.onload = function () {
+                if (this.status == 200) {
+                    res = JSON.parse(xhr.response);
+                    if (res.status === 'ok') resolve(res.data);
+                    else reject('API: RIPE API returned not-OK.');
+                } else reject('API: got non-200 response.');
+            };
+        });
+    }
+
+    var renderByPrefixesOrAddresses = async function (poas) {
+        var links = new Set();
+        var lvl = level.value;
+
+        await Promise.all(poas.map(async poa => {
+            try {
+                m_log(`getGraphByPrefixesOrAddresses: constructing graph with prefix/IP ${poa}...`);
+
+                var paths;
+
+                m_log(`getGraphByPrefixesOrAddresses: fetching paths for ${poa} from RIPE RIS...`);
+                if (!paths_cache[poa]) {
+                    var rslt = await ripeGet(`looking-glass/data.json?resource=${poa}`);
+                    paths = rslt.rrcs.map(rrc => rrc.peers).flat().map(peer => peer.as_path.split(' ').reverse());
+                    paths_cache[poa] = paths;
+                    m_log(`getGraphByPrefixesOrAddresses: found ${paths.length} path(s) for ${poa} in RIPE RIS.`);
+                } else {
+                    paths = paths_cache[poa];
+                    m_log(`getGraphByPrefixesOrAddresses: found ${paths.length} path(s) for ${poa} in RIPE RIS (cached).`);
+                }
+
+                paths.forEach(path => {
+                    if (ignore_path[lvl](path)) return;
+
+                    var last;
+
+                    path.forEach((asn, i, a) => {
+                        if (last && last != asn && draw_this[lvl](a, i)) {
+                            links.add(`AS${asn} [URL="https://bgp.he.net/AS${asn}"]`);
+                            links.add(`AS${last} [URL="https://bgp.he.net/AS${last}"]`);
+                            links.add(`AS${last}->AS${asn}`);
+                        }
+                        last = asn;
+                    });
+                });
+
+                m_log(`getGraphByPrefixesOrAddresses: done: ${poa}.`)
+            } catch (e) {
+                m_err(e);
+            }
+        }));
+
+        var graph = `digraph{rankdir="LR";${Array.from(links).join(';')}}`;
+        render(graph);
+    };
+
+    var renderByAs = async function (as) {
+        var format_ok = false;
+
+        as = as.toUpperCase();
+
+        if(/^[1-9]+[0-9]*/.test(as)) {
+            as = `AS${as}`;
+            format_ok = true;
+        }
+        if (/^AS[1-9]+[0-9]*/.test(as)) format_ok = true;
+        if (!format_ok) {
+            throw 'getPrefixesByAs: bad ASN.';
+        }
+
+        m_log(`getPrefixesByAs: getting prefixes list for ${as}...`);
+
+        var prefixes;
+
+        if (!prefixes_cache[as]) {
+            var rslt = await ripeGet(`announced-prefixes/data.json?resource=${as}`);
+            prefixes = rslt.prefixes.map(p => p.prefix);
+            prefixes_cache[as] = prefixes;
+            m_log(`getPrefixesByAs: done, found ${prefixes.length} prefix(es).`);
+        } else {
+            prefixes = prefixes_cache[as];
+            m_log(`getPrefixesByAs: done, found ${prefixes.length} prefix(es) (cached).`);
+        }
+
+        if (prefixes.length > 200) {
+            if (!confirm(`${as} has a large number of routes (${prefixes.length}), are you sure you want to proceed? Continuing may cause your browser to hang.`)) {
+                m_log('getPrefixesByAs: aborted.');
+                return;
+            }
+        }
+
+        renderByPrefixesOrAddresses(prefixes);
+    };
+
+    var doQuery = (target) => {
+        disable();
+        if (target) {
+            window.location.hash = `${target}`;
+        }
+        try {
+            var hash = window.location.hash.replace('#', '').toUpperCase();
+            if (hash != "") {
+                query.value = hash;
+                if (/^AS[1-9]+[0-9]*$/.test(hash)) renderByAs(hash);
+                else if (/^[1-9]+[0-9]*$/.test(hash)) renderByAs(`AS${hash}`);
+                else renderByPrefixesOrAddresses([hash]);
+            }
+        } catch (err) {
+            m_err(err);
+        }
+        enable();
+    };
+
+    querybtn.onclick = () => {
+        doQuery(query.value)
+    };
+
+    document.body.onload = () => {
+        m_log('ready.');
+        doQuery();
+    }
+
+    document.getElementById('ccbtn').onclick = () => {
+        prefixes_cache = {};
+        paths_cache = {};
+        m_log('Cached entries removed.');
+    };
+})();
