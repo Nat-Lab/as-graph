@@ -172,5 +172,13 @@
             enable();
         };
 
+        document.body.onload = () => {
+            var hash = window.location.hash.replace('#', '').toUpperCase();
+            if (hash != "") {
+                if (/^AS[1-9]+[0-9]*/.test(hash)) renderByAs(hash);
+                else renderByPrefixesOrAddresses([hash]);
+            }
+        };
+
     </script>
 </html>
