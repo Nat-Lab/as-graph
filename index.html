@@ -47,11 +47,9 @@
         query.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
 
         var disable = () => {
-            window.onhashchange = undefined;
             [querybtn, query].forEach(e => e.disabled = true);
         };
         var enable = () => {
-            window.onhashchange = () => doQuery();
             [querybtn, query].forEach(e => e.disabled = false);
         };
 
