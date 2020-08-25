@@ -20,39 +20,67 @@
         </div>
         <div class="box controlboxes">
             <div class="controlbox">
+                <div class="control hide" id="local_info">
+                    Your network: <a class="mono" href="#" id="lpfxbtn"></a> (<a class="mono" href="#" id="lasnbtn"></a>)
+                    <div id="ext_sources">
+                        View you network on:
+                    </div>
+                </div>
                 <div class="control">
-                    Show propagation from/of
-                    <input type="text" id="query" autocomplete="off" spellcheck="false" placeholder="ASN, IP or prefix...">
-                    to
-                    <select id="level">
-                        <option value="-1" disabled>select target(s)...</option>
-                        <option value="0">direct peers/transits</option>
-                        <option value="1" selected>large ISPs</option>
-                        <option value="2">large ISPs and direct peers</option>
-                        <option value="3">all ISPs</option>
-                        <option value="4">all ISPs and direct peers</option>
-                        <option value="5">everything</option>
-                        <option value="6">custom target(s)...</option>
-                    </select>
-                    <input class="hide" type="text" id="targets" autocomplete="off" spellcheck="false"
-                        placeholder="AS6939, AS174, ...">
-                    <input type="checkbox" id="use_isolario"> <label for="use_isolario">Include isolario data</label>
-                    <input type="checkbox" id="use_asname"> <label for="use_asname">Show <span class="mono">as-name</span> instead of ASN</label>
-
-                    <button class="button" id="querybtn">Go</a>
-                    <button class="button" id="ccbtn">Clear cache</a>
+                    <div class="panel">
+                        <label for="query">Show propagation from/of</label>
+                        <div><input type="text" id="query" autocomplete="off" spellcheck="false" placeholder="ASN, IP or prefix..."></div>
+                    </div>
+                    <div class="panel">
+                        <label for="level">to the following network(s):</label>
+                        <div>
+                            <select id="level">
+                                <option value="-1" disabled>select target(s)...</option>
+                                <option value="0">direct peers/transits</option>
+                                <option value="1" selected>large ISPs</option>
+                                <option value="2">large ISPs and direct peers</option>
+                                <option value="3">all ISPs</option>
+                                <option value="4">all ISPs and direct peers</option>
+                                <option value="5">everything</option>
+                                <option value="6">custom target(s)...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <input class="hide" type="text" id="targets" autocomplete="off" spellcheck="false"
+                                placeholder="AS6939, AS174, ...">
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="option">
+                            <input type="checkbox" id="use_isolario"> <label for="use_isolario">Include isolario data</label>
+                            <span class="option_descr">By default, <span class="mono">as-graph</span> takes data from RIPE RIS only. Enable this option to try to fetch data from the Isolario project too. Loading data from Isolario can be slow and may not work sometime.</span>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" id="use_asname"> <label for="use_asname">Show <span class="mono">as-name</span> instead of ASN</label>
+                            <span class="option_descr">Enable this option to use <span class="mono">as-name</span> as graph labels. Note that you can always hover on labels to check their <span class="mono">as-name</span>.</span>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" id="vertical_graph"> <label for="vertical_graph">Use vertically oriented graph</label>
+                            <span class="option_descr">Enable this option to orient the graph vertically.</span>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" id="show_console"> <label for="show_console">Show console</label>
+                            <span class="option_descr">Enable this option to show console.</span>
+                            <div id="console">
+                                <pre class="log_out" id="log">
+                                </pre>
+                            </div>
+                        </div>
+                        <div class="option">
+                            <button class="button" id="ccbtn">Clear cache</button>
+                            <span class="option_descr"><span class="mono">as-graph</span> caches <span class="mono">as-paths</span> for prefixes, prefixes list for AS throughout the session. <span class="mono">as-name</span>s are cached in persistent storage. Click this to remove the cached entries.</span>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <button class="button" id="querybtn">Go</button>
+                    </div>
                 </div>
             </div>
-            <div class="control hide" id="local_info">
-                Your network: <a class="mono" href="#" id="lpfxbtn"></a> (<a class="mono" href="#" id="lasnbtn"></a>)
-                <div id="ext_sources">
-                    View you network on:
-                </div>
-            </div>
-        </div>
-        <div class="box log">
-            <pre class="log_out" id="log">
-                </pre>
         </div>
         <div class="box display" id="display">
         </div>

@@ -1,16 +1,4 @@
 (function () {
-    var paths_cache = {};
-    var prefixes_cache = {};
-    var isolario_cache = {};
-    var asname_cache;
-
-    try {
-        asname_cache = JSON.parse(localStorage.asname_cache);
-    } catch {
-        asname_cache = {};
-    }
-
-    var element;
     var display = document.getElementById('display');
     var log = document.getElementById('log');
 
@@ -21,6 +9,21 @@
     var targets = document.getElementById('targets');
     var use_isolario = document.getElementById('use_isolario');
     var use_asname = document.getElementById('use_asname');
+    var vertical_graph = document.getElementById('vertical_graph');
+
+    var paths_cache = {};
+    var prefixes_cache = {};
+    var isolario_cache = {};
+    var asname_cache;
+
+    try {
+        vertical_graph.checked = localStorage.asname_cache.vertical_graph
+        asname_cache = JSON.parse(localStorage.asname_cache);
+    } catch {
+        asname_cache = {};
+    }
+
+    var element;
 
     const large_isps = [
         "7018", "3356", "3549", "3320", "3257", "6830", "2914", "5511", "3491", "1239",
@@ -65,10 +68,13 @@
     targets.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
 
     var disable = () => {
-        [querybtn, query, level].forEach(e => e.disabled = true);
+        [querybtn, query, level, targets, use_isolario, use_asname, vertical_graph].forEach(e => e.disabled = true);
+        querybtn.innerText = 'Loading...';
     };
     var enable = () => {
-        [querybtn, query, level].forEach(e => e.disabled = false);
+        [querybtn, query, level, targets, use_isolario, use_asname, vertical_graph].forEach(e => e.disabled = false);
+        querybtn.innerText = 'Go';
+
     };
 
     var m_log = function(msg) {
@@ -90,6 +96,7 @@
             element.setAttribute('width', '100%');
             element.removeAttribute('height');
             display.appendChild(element);
+            element.scrollIntoView();
             m_log('render: done.');
 
         } catch(err) {
@@ -230,8 +237,8 @@
             else links.add(`AS${asn} [URL="https://bgp.he.net/AS${asn}" tooltip="${as_names[asn].replace(/"/g, `\\"`)}"]`);
         });
 
-        var graph = `digraph{rankdir="LR";${Array.from(links).join(';')}}`;
-        render(graph);
+        var graph = `digraph Propagation{${vertical_graph.checked ? '' : 'rankdir="LR";'}${Array.from(links).join(';')}}`;
+        await render(graph);
     };
 
     var renderByAs = async function (as) {
@@ -269,10 +276,10 @@
             }
         }
 
-        renderByPrefixesOrAddresses(prefixes);
+        await renderByPrefixesOrAddresses(prefixes);
     };
 
-    var doQuery = (target) => {
+    var doQuery = async function (target) {
         disable();
         if (target) {
             window.location.hash = `${target}`;
@@ -281,9 +288,9 @@
             var hash = window.location.hash.replace('#', '').toUpperCase();
             if (hash != "") {
                 query.value = hash;
-                if (/^AS[1-9]+[0-9]*$/.test(hash)) renderByAs(hash);
-                else if (/^[1-9]+[0-9]*$/.test(hash)) renderByAs(`AS${hash}`);
-                else renderByPrefixesOrAddresses([hash]);
+                if (/^AS[1-9]+[0-9]*$/.test(hash)) await renderByAs(hash);
+                else if (/^[1-9]+[0-9]*$/.test(hash)) await renderByAs(`AS${hash}`);
+                else await renderByPrefixesOrAddresses([hash]);
             }
         } catch (err) {
             m_err(err);
@@ -331,6 +338,8 @@
         prefixes_cache = {};
         paths_cache = {};
         isolario_cache = {};
+        asname_cache = {};
+        localStorage.asname_cache = undefined;
         m_log('Cached entries removed.');
     };
 })();

@@ -39,7 +39,7 @@ img {
 }
 
 .header > .subtitle {
-    color: #555;
+    color: #888;
 }
 
 .box {
@@ -55,16 +55,71 @@ img {
     max-height: 15em;
     background-color: #eee;
     overflow: scroll;
+    margin-top: .25em;
+    margin-bottom: .25em;
+
 }
 
-button {
-    margin-left: .5em;
-}
-
-.mono, input {
+.mono, input[type=text] {
     font-family: 'Courier New', Courier, monospace;
 }
 
 .hide {
     display: none;
 }
+
+.controlboxes {
+    max-width: 768px;
+}
+
+.panel {
+    margin-top: .25em;
+}
+
+.option {
+    margin-bottom: .25em;
+}
+
+.option_descr {
+    margin-left: .25em;
+    font-size: .9em;
+    color: #888;
+}
+
+input[type=text], select {
+    width: 100%;
+    padding: 6px 10px;
+    margin: 6px 0px;
+    border: .5px solid #ccc;
+    border-radius: 1px;
+}
+
+#querybtn {
+    width: 100%;
+    background-color: #eee;
+    border: .5px solid #333;
+    padding: 10px;
+    font-size: .8em;
+    margin: 6px 0;
+    border: none;
+    border-radius: 1px;
+    cursor: pointer;
+}
+
+#querybtn:hover:not([disabled]) {
+    background-color: #ddd;
+}
+
+#querybtn[disabled] {
+    color: #888;
+    cursor: default;
+}
+
+#show_console:checked ~ #console {
+    display: block;
+}
+
+#console {
+    display: none;
+}
+  
