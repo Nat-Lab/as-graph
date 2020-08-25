@@ -36,9 +36,9 @@
         "1273", "2828", "4134", "4837"];
 
     const target_descrs = [
-        'Show route propagation to directly connected peers.',
+        'Show only directly connected peers.',
         'Show only the route propagation paths to well-known ISPs.',
-        'Show route propagation paths to well-known ISPs, but include all direct peers in the graph.',
+        'Show route propagation paths to well-known ISPs, and include all direct peers in the graph.',
         'Show only the route propagation paths to ISPs.',
         'Show route propagation paths to ISPs, and include all direct peers in the graph.',
         'Show all known propagation paths.',
