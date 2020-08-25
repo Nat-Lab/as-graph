@@ -280,6 +280,7 @@
     document.getElementById('ccbtn').onclick = () => {
         prefixes_cache = {};
         paths_cache = {};
+        isolario_cache = {};
         m_log('Cached entries removed.');
     };
 })();
