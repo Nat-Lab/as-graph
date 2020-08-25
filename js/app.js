@@ -7,6 +7,7 @@
 
     var level = document.getElementById('level');
     var targets = document.getElementById('targets');
+
     var use_isolario = document.getElementById('use_isolario');
     var use_asname = document.getElementById('use_asname');
     var vertical_graph = document.getElementById('vertical_graph');
@@ -17,7 +18,9 @@
     var asname_cache;
 
     try {
-        vertical_graph.checked = localStorage.asname_cache.vertical_graph
+        use_isolario.checked = localStorage.use_isolario === "true";
+        use_asname.checked = localStorage.use_asname === "true";
+        vertical_graph.checked = localStorage.vertical_graph === "true";
         asname_cache = JSON.parse(localStorage.asname_cache);
     } catch {
         asname_cache = {};
@@ -63,9 +66,16 @@
         if (this.value === "6") targets.className = '';
         else targets.className = 'hide';
     });
-
     query.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
     targets.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
+
+    var saveOptions = () => {
+        localStorage.use_isolario = use_isolario.checked;
+        localStorage.use_asname = use_asname.checked;
+        localStorage.vertical_graph = vertical_graph.checked;
+    };
+
+    [use_isolario, use_asname, vertical_graph].forEach(o => o.addEventListener('change', saveOptions));
 
     var disable = () => {
         [querybtn, query, level, targets, use_isolario, use_asname, vertical_graph].forEach(e => e.disabled = true);
@@ -88,6 +98,8 @@
     }
 
     var render = async function (graph) {
+        querybtn.innerText = 'Rendering...';
+
         m_log('render: request render...');
         var viz = new Viz();
         if (element) element.remove();
@@ -96,7 +108,7 @@
             element.setAttribute('width', '100%');
             element.removeAttribute('height');
             display.appendChild(element);
-            element.scrollIntoView();
+            //element.scrollIntoView();
             m_log('render: done.');
 
         } catch(err) {
@@ -120,6 +132,8 @@
     }
 
     var isolarioGetPaths = function (query) {
+        querybtn.innerText = 'Loading isolario paths...';
+
         return new Promise((resolve, reject) => {
             var xhr = new XMLHttpRequest();
             xhr.open('POST', `https://api2.nat.moe/isolario.api`);
@@ -133,6 +147,8 @@
     };
 
     var getAsNames = async function (asns) {
+        querybtn.innerText = 'Loading as-names...';
+
         var cache_hit = {};
         var cache_missed = [];
 
@@ -152,6 +168,7 @@
     };
 
     var renderByPrefixesOrAddresses = async function (poas) {
+        querybtn.innerText = 'Loading paths...';
         var lvl = level.value;
         var paths = [];
 
@@ -242,6 +259,7 @@
     };
 
     var renderByAs = async function (as) {
+        querybtn.innerText = 'Loading prefixes...';
         var format_ok = false;
 
         as = as.toUpperCase();
