@@ -61,10 +61,14 @@ button {
     margin-left: .5em;
 }
 
-input {
+.mono, input {
     font-family: 'Courier New', Courier, monospace;
 }
 
 .hide {
     display: none;
+}
+
+#ext_sources > a {
+    margin-right: .2em;
 }

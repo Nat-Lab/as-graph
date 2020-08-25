@@ -1,51 +1,61 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>as-graph</title>
-        <link rel="stylesheet" href="css/styles.css">
-        <script src="js/vizjs/viz.js"></script>
-        <script src="js/vizjs/full.render.js"></script>
-        <meta name="description" content="BGP route propagation debugger">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1 class="title">as-graph</h1>
-                <span class="smalltitle">
-                    BGP route propagation debugger.
-                </span>
-            </div>            
-            <div class="box controlboxes">
-                <div class="controlbox">
-                    <label for="query">Type an IP address, prefix or ASN to get started:</label>
-                    <div class="control">
-                        Show propagation of
-                        <input type="text" id="query" autocomplete="off" spellcheck="false" placeholder="ASN, IP or prefix...">
-                        to
-                        <select id="level">
-                            <option value="-1" disabled>select target...</option>
-                            <option value="0">direct peers/transits</option>
-                            <option value="1" selected>large ISPs</option>
-                            <option value="2">large ISPs and direct peers</option>
-                            <option value="3">all ISPs</option>
-                            <option value="4">all ISPs and direct peers</option>
-                            <option value="5">everything</option>
-                            <option value="6">custom target(s)...</option>
-                        </select>
-                        <input class="hide" type="text" id="targets" autocomplete="off" spellcheck="false" placeholder="AS6939, AS174, ...">
-                        <button class="button" id="querybtn">Go</a>
-                        <button class="button" id="ccbtn">Clear cache</a>
-                    </div>
-                </div>
-            </div>
-            <div class="box log">
-                <pre class="log_out" id="log">
-                </pre>
-            </div>
-            <div class="box display" id="display">
+
+<head>
+    <title>as-graph</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/vizjs/viz.js"></script>
+    <script src="js/vizjs/full.render.js"></script>
+    <meta name="description" content="BGP route propagation debugger">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">as-graph</h1>
+            <div class="smalltitle">
+                BGP route propagation debugger.
             </div>
         </div>
-    </body>
-    <script src="js/app.js"></script>
+        <div class="box controlboxes">
+            <div class="controlbox">
+                <div class="control">
+                    Show propagation of
+                    <input type="text" id="query" autocomplete="off" spellcheck="false"
+                        placeholder="ASN, IP or prefix...">
+                    to
+                    <select id="level">
+                        <option value="-1" disabled>select target...</option>
+                        <option value="0">direct peers/transits</option>
+                        <option value="1" selected>large ISPs</option>
+                        <option value="2">large ISPs and direct peers</option>
+                        <option value="3">all ISPs</option>
+                        <option value="4">all ISPs and direct peers</option>
+                        <option value="5">everything</option>
+                        <option value="6">custom target(s)...</option>
+                    </select>
+                    <input class="hide" type="text" id="targets" autocomplete="off" spellcheck="false"
+                        placeholder="AS6939, AS174, ...">
+                    <button class="button" id="querybtn">Go</a>
+                        <button class="button" id="ccbtn">Clear cache</a>
+                </div>
+            </div>
+            <div class="control hide" id="local_info">
+                Your network: <a class="mono" href="#" id="lpfxbtn"></a> (<a class="mono" href="#" id="lasnbtn"></a>)
+                <div id="ext_sources">
+                    View you network on:
+                </div>
+            </div>
+        </div>
+        <div class="box log">
+            <pre class="log_out" id="log">
+                </pre>
+        </div>
+        <div class="box display" id="display">
+        </div>
+    </div>
+</body>
+<script src="js/app.js"></script>
+
 </html>

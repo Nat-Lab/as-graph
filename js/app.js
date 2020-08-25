@@ -17,6 +17,15 @@
         "6453", "6762", "12956", "1299", "701", "6461", "174", "7922", "6939", "9002",
         "1273", "2828", "4134", "4837"];
 
+    const external_sources = [
+        { name: 'stat.ripe.net', url: 'https://stat.ripe.net/AS' },
+        { name: 'bgp.he.net', url: 'https://bgp.he.net/AS' },
+        { name: 'bgp.tools', url: 'https://bgp.tools/as/' },
+        { name: 'bgpview.io', url: 'https://bgpview.io/asn/' },
+        { name: 'radar.qrator.net', url: 'https://radar.qrator.net/AS' },
+        { name: 'whois.ipip.net', url: 'https://whois.ipip.net/AS' }
+    ];
+
     const ignore_path = [
         (path) => false,
         (path) => !path.some(asn => large_isps.includes(asn)),
@@ -200,9 +209,35 @@
         doQuery(query.value)
     };
 
-    document.body.onload = () => {
+    document.body.onload = async () => {
         m_log('ready.');
         doQuery();
+
+        var local = await ripeGet('my-network-info/data.json');
+        var local_info = document.getElementById('local_info');
+        var ext_sources = document.getElementById('ext_sources');
+        var l_pfx_btn = document.getElementById('lpfxbtn');
+        var l_asn_btn = document.getElementById('lasnbtn');
+
+        var local_asn = `AS${local.asns[0]}`;
+
+        l_pfx_btn.innerText = local.address;
+        l_pfx_btn.href = `#${local.prefix}`;
+        l_pfx_btn.onclick = () => doQuery(local.prefix);
+
+        l_asn_btn.innerText = local_asn;
+        l_asn_btn.href = `#${local_asn}`;
+        l_asn_btn.onclick = () => doQuery(local_asn);
+
+        external_sources.forEach(source => {
+            var a = document.createElement('a');
+            a.innerText = source.name;
+            a.target = '_blank';
+            a.href = `${source.url}${local.asns[0]}`;
+            ext_sources.appendChild(a);
+        });
+
+        local_info.className = 'control';
     }
 
     document.getElementById('ccbtn').onclick = () => {
