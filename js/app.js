@@ -235,6 +235,7 @@
             a.target = '_blank';
             a.href = `${source.url}${local.asns[0]}`;
             ext_sources.appendChild(a);
+            ext_sources.appendChild(document.createTextNode(' '));
         });
 
         local_info.className = 'control';
