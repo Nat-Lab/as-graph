@@ -1,6 +1,7 @@
 (function () {
     var paths_cache = {};
     var prefixes_cache = {};
+    var isolario_cache = {};
 
     var element;
     var display = document.getElementById('display');
@@ -11,6 +12,7 @@
 
     var level = document.getElementById('level');
     var targets = document.getElementById('targets');
+    var use_isolario = document.getElementById('use_isolario');
 
     const large_isps = [
         "7018", "3356", "3549", "3320", "3257", "6830", "2914", "5511", "3491", "1239",
@@ -102,47 +104,81 @@
         });
     }
 
+    var isolarioGetPaths = function (query) {
+        return new Promise((resolve, reject) => {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', `https://api2.nat.moe/isolario.api`);
+            xhr.send(query.toLowerCase());
+            xhr.onload = function () {
+                if (this.status == 200) {
+                    resolve(xhr.response.split('\n').map(p => p.split(' ').reverse()).filter(p => p.length > 1 && !p.some(p => p == 23456)));
+                } else reject('API: got non-200 response.');
+            };
+        });
+    };
+
     var renderByPrefixesOrAddresses = async function (poas) {
         var links = new Set();
         var lvl = level.value;
+        var paths = [];
 
         await Promise.all(poas.map(async poa => {
             try {
                 m_log(`getGraphByPrefixesOrAddresses: constructing graph with prefix/IP ${poa}...`);
 
-                var paths;
-
                 m_log(`getGraphByPrefixesOrAddresses: fetching paths for ${poa} from RIPE RIS...`);
                 if (!paths_cache[poa]) {
                     var rslt = await ripeGet(`looking-glass/data.json?resource=${poa}`);
-                    paths = rslt.rrcs.map(rrc => rrc.peers).flat().map(peer => peer.as_path.split(' ').reverse());
+                    var _paths = rslt.rrcs.map(rrc => rrc.peers).flat().map(peer => peer.as_path.split(' ').reverse());
+                    paths = paths.concat(_paths);
                     paths_cache[poa] = paths;
-                    m_log(`getGraphByPrefixesOrAddresses: found ${paths.length} path(s) for ${poa} in RIPE RIS.`);
+                    m_log(`getGraphByPrefixesOrAddresses: found ${_paths.length} path(s) for ${poa} in RIPE RIS.`);
                 } else {
-                    paths = paths_cache[poa];
-                    m_log(`getGraphByPrefixesOrAddresses: found ${paths.length} path(s) for ${poa} in RIPE RIS (cached).`);
+                    var _paths = paths_cache[poa];
+                    m_log(`getGraphByPrefixesOrAddresses: found ${_paths.length} path(s) for ${poa} in RIPE RIS (cached).`);
+                    paths = paths.concat(_paths);
                 }
-
-                paths.forEach(path => {
-                    if (ignore_path[lvl](path)) return;
-
-                    var last;
-
-                    path.forEach((asn, i, a) => {
-                        if (last && last != asn && draw_this[lvl](a, i)) {
-                            links.add(`AS${asn} [URL="https://bgp.he.net/AS${asn}"]`);
-                            links.add(`AS${last} [URL="https://bgp.he.net/AS${last}"]`);
-                            links.add(`AS${last}->AS${asn}`);
-                        }
-                        last = asn;
-                    });
-                });
 
                 m_log(`getGraphByPrefixesOrAddresses: done: ${poa}.`)
             } catch (e) {
                 m_err(e);
             }
         }));
+
+        if (poas.join(',').includes('/') && use_isolario.checked) {
+            // fixme
+            var isolario_query = poas.join('\n');
+            m_log(`getPrefixesByAs: getting paths list from isolario...`);
+
+            var isolario_paths;
+            if (!isolario_cache[isolario_query]) {
+                isolario_paths = await isolarioGetPaths(isolario_query);
+                isolario_cache[isolario_query] = isolario_paths;
+                m_log(`getPrefixesByAs: done, got ${isolario_paths.length} path(s) from isolario.`);
+            } else {
+                isolario_paths = isolario_cache[isolario_query];
+                m_log(`getPrefixesByAs: done, got ${isolario_paths.length} path(s) from isolario (cached).`);
+            }
+
+            paths = paths.concat(isolario_paths);
+        }
+    
+        
+
+        paths.forEach(path => {
+            if (ignore_path[lvl](path)) return;
+
+            var last;
+
+            path.forEach((asn, i, a) => {
+                if (last && last != asn && draw_this[lvl](a, i)) {
+                    links.add(`AS${asn} [URL="https://bgp.he.net/AS${asn}"]`);
+                    links.add(`AS${last} [URL="https://bgp.he.net/AS${last}"]`);
+                    links.add(`AS${last}->AS${asn}`);
+                }
+                last = asn;
+            });
+        });
 
         var graph = `digraph{rankdir="LR";${Array.from(links).join(';')}}`;
         render(graph);
