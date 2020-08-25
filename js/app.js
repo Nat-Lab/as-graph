@@ -11,6 +11,8 @@
     var use_isolario = document.getElementById('use_isolario');
     var use_asname = document.getElementById('use_asname');
     var vertical_graph = document.getElementById('vertical_graph');
+    var level_descr = document.getElementById('level_descr');
+
 
     var paths_cache = {};
     var prefixes_cache = {};
@@ -32,6 +34,16 @@
         "7018", "3356", "3549", "3320", "3257", "6830", "2914", "5511", "3491", "1239",
         "6453", "6762", "12956", "1299", "701", "6461", "174", "7922", "6939", "9002",
         "1273", "2828", "4134", "4837"];
+
+    const target_descrs = [
+        'Show route propagation to directly connected peers.',
+        'Show only the route propagation paths to well-known ISPs.',
+        'Show route propagation paths to well-known ISPs, but include all direct peers in the graph.',
+        'Show only the route propagation paths to ISPs.',
+        'Show route propagation paths to ISPs, and include all direct peers in the graph.',
+        'Show all known propagation paths.',
+        'Show route propagation paths to the given network(s).'
+    ];
 
     const external_sources = [
         { name: 'stat.ripe.net', url: 'https://stat.ripe.net/AS' },
@@ -62,10 +74,7 @@
         (path, index) => path.slice(index).some(asn => targets.value.replace(/(as| )/gi, '').split(',').includes(asn))
     ];
 
-    level.addEventListener('change', function () {
-        if (this.value === "6") targets.className = '';
-        else targets.className = 'hide';
-    });
+
     query.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
     targets.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
 
@@ -74,6 +83,14 @@
         localStorage.use_asname = use_asname.checked;
         localStorage.vertical_graph = vertical_graph.checked;
     };
+
+    var level_change = () => {
+        if (level.value === "6") targets.className = '';
+        else targets.className = 'hide';
+        level_descr.innerText = target_descrs[Number.parseInt(level.value)];
+    }
+
+    level.addEventListener('change', level_change);
 
     [use_isolario, use_asname, vertical_graph].forEach(o => o.addEventListener('change', saveOptions));
 
@@ -321,6 +338,7 @@
     };
 
     document.body.onload = async () => {
+        level_change();
         m_log('ready.');
         doQuery();
 

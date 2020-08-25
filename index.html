@@ -30,8 +30,6 @@
                     <div class="panel">
                         <label for="query">Show propagation from/of</label>
                         <div><input type="text" id="query" autocomplete="off" spellcheck="false" placeholder="ASN, IP or prefix..."></div>
-                    </div>
-                    <div class="panel">
                         <label for="level">to the following network(s):</label>
                         <div>
                             <select id="level">
@@ -45,11 +43,14 @@
                                 <option value="6">custom target(s)...</option>
                             </select>
                         </div>
+                        <div id="level_descr" class="option_descr"></div>
                         <div>
                             <input class="hide" type="text" id="targets" autocomplete="off" spellcheck="false"
                                 placeholder="AS6939, AS174, ...">
                         </div>
                     </div>
+                </div>
+                <div class="control">
                     <div class="panel">
                         <div class="option">
                             <input type="checkbox" id="use_isolario"> <label for="use_isolario">Include isolario data</label>
@@ -76,7 +77,7 @@
                             <span class="option_descr"><span class="mono">as-graph</span> caches <span class="mono">as-paths</span> for prefixes, prefixes list for AS throughout the session. <span class="mono">as-name</span>s are cached in persistent storage. Click this to remove the cached entries.</span>
                         </div>
                     </div>
-                    <div class="panel">
+                    <div class="control">
                         <button class="button" id="querybtn">Go</button>
                     </div>
                 </div>

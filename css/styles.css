@@ -81,9 +81,12 @@ img {
 }
 
 .option_descr {
-    margin-left: .25em;
     font-size: .9em;
     color: #888;
+}
+
+label {
+    margin-right: .25em;
 }
 
 input[type=text], select {
