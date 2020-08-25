@@ -2,6 +2,13 @@
     var paths_cache = {};
     var prefixes_cache = {};
     var isolario_cache = {};
+    var asname_cache;
+
+    try {
+        asname_cache = JSON.parse(localStorage.asname_cache);
+    } catch {
+        asname_cache = {};
+    }
 
     var element;
     var display = document.getElementById('display');
@@ -13,6 +20,7 @@
     var level = document.getElementById('level');
     var targets = document.getElementById('targets');
     var use_isolario = document.getElementById('use_isolario');
+    var use_asname = document.getElementById('use_asname');
 
     const large_isps = [
         "7018", "3356", "3549", "3320", "3257", "6830", "2914", "5511", "3491", "1239",
@@ -117,8 +125,26 @@
         });
     };
 
+    var getAsNames = async function (asns) {
+        var cache_hit = {};
+        var cache_missed = [];
+
+        asns.forEach(asn => {
+            if (asname_cache[asn]) cache_hit[asn] = asname_cache[asn];
+            else cache_missed.push(asn);
+        });
+
+        m_log(`getAsNames: ${Object.keys(cache_hit).length} asn(s) cache hit.`);
+        m_log(`getAsNames: ${cache_missed.length} asn(s) cache missed.`);
+        if (cache_missed.length > 0) {
+            var names = (await ripeGet(`as-names/data.json?resource=${cache_missed.join(',')}`)).names;
+            localStorage.asname_cache = JSON.stringify(asname_cache = { ...asname_cache, ...names });
+        }
+
+        return { ...names, ...cache_hit };
+    };
+
     var renderByPrefixesOrAddresses = async function (poas) {
-        var links = new Set();
         var lvl = level.value;
         var paths = [];
 
@@ -163,7 +189,8 @@
             paths = paths.concat(isolario_paths);
         }
     
-        
+        var asns = new Set();
+        var edges = new Set();
 
         paths.forEach(path => {
             if (ignore_path[lvl](path)) return;
@@ -172,12 +199,35 @@
 
             path.forEach((asn, i, a) => {
                 if (last && last != asn && draw_this[lvl](a, i)) {
-                    links.add(`AS${asn} [URL="https://bgp.he.net/AS${asn}"]`);
-                    links.add(`AS${last} [URL="https://bgp.he.net/AS${last}"]`);
-                    links.add(`AS${last}->AS${asn}`);
+                    asns.add(last);
+                    asns.add(asn);
+                    edges.add(`${last},${asn}`);
                 }
                 last = asn;
             });
+        });
+
+        var links = new Set();
+
+        var asns_arr = Array.from(asns);
+
+        m_log(`getPrefixesByAs: getting names for ${asns_arr.length} asn(s).`);
+        var as_names = await getAsNames(asns_arr);
+        m_log(`getPrefixesByAs: done.`)
+
+        edges.forEach(edge => {
+            var [src, dst] = edge.split(',');
+            if (use_asname.checked) {
+                var src_naeme = as_names[src].split(' ')[0];
+                var dst_name = as_names[dst].split(' ')[0];
+                links.add(`"${src_naeme}"->"${dst_name}"`);
+            }
+            else links.add(`AS${src}->AS${dst}`);
+        });
+
+        asns_arr.forEach(asn => {
+            if (use_asname.checked) links.add(`"${as_names[asn].split(' ')[0]}" [URL="https://bgp.he.net/AS${asn}" tooltip="AS${asn}" shape=rectangle]`);
+            else links.add(`AS${asn} [URL="https://bgp.he.net/AS${asn}" tooltip="${as_names[asn].replace(/"/g, `\\"`)}"]`);
         });
 
         var graph = `digraph{rankdir="LR";${Array.from(links).join(';')}}`;

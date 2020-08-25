@@ -21,12 +21,11 @@
         <div class="box controlboxes">
             <div class="controlbox">
                 <div class="control">
-                    Show propagation of
-                    <input type="text" id="query" autocomplete="off" spellcheck="false"
-                        placeholder="ASN, IP or prefix...">
+                    Show propagation from/of
+                    <input type="text" id="query" autocomplete="off" spellcheck="false" placeholder="ASN, IP or prefix...">
                     to
                     <select id="level">
-                        <option value="-1" disabled>select target...</option>
+                        <option value="-1" disabled>select target(s)...</option>
                         <option value="0">direct peers/transits</option>
                         <option value="1" selected>large ISPs</option>
                         <option value="2">large ISPs and direct peers</option>
@@ -38,6 +37,8 @@
                     <input class="hide" type="text" id="targets" autocomplete="off" spellcheck="false"
                         placeholder="AS6939, AS174, ...">
                     <input type="checkbox" id="use_isolario"> <label for="use_isolario">Include isolario data</label>
+                    <input type="checkbox" id="use_asname"> <label for="use_asname">Show <span class="mono">as-name</span> instead of ASN</label>
+
                     <button class="button" id="querybtn">Go</a>
                     <button class="button" id="ccbtn">Clear cache</a>
                 </div>
