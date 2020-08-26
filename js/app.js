@@ -109,6 +109,7 @@
         details.className = 'box infobox hide';
         prefixinfo.className = 'hide';
         asinfo.className = 'hide';
+        peerinfo.className = 'hide';
         querybtn.innerText = 'Loading...';
     };
     var enable = () => {
@@ -139,7 +140,7 @@
             element.setAttribute('width', '100%');
             element.removeAttribute('height');
             display.appendChild(element);
-            //element.scrollIntoView();
+            element.scrollIntoView();
             m_log('render: done.');
 
         } catch(err) {
@@ -262,6 +263,7 @@
 
             details.className = 'box infobox';
             prefixinfo.className = '';
+            peerinfo.className = '';
         }
 
         await Promise.all(poas.map(async poa => {
@@ -478,6 +480,7 @@
             });
             details.className = 'box infobox';
             asinfo.className = '';
+            peerinfo.className = '';
         }
 
         if (prefixes.length > 200) {
