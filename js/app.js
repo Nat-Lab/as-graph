@@ -20,6 +20,9 @@
     var prefixinfo = document.getElementById('prefixinfo');
     var asinfo = document.getElementById('asinfo');
 
+    var cscbtn = document.getElementById('cscbtn');
+    var cpcbtn = document.getElementById('cpcbtn');
+
     var paths_cache = {};
     var prefixes_cache = {};
     var isolario_cache = {};
@@ -119,7 +122,7 @@
 
     var disable = () => {
         lock = true;
-        [querybtn, query, level, targets, use_isolario, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = true);
+        [querybtn, cscbtn, cpcbtn, query, level, targets, use_isolario, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = true);
         details.className = 'box infobox hide';
         prefixinfo.className = 'hide';
         asinfo.className = 'hide';
@@ -132,7 +135,7 @@
         lock = false;
         details.className = 'box infobox';
         display.className = '';
-        [querybtn, query, level, targets, use_isolario, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = false);
+        [querybtn, cscbtn, cpcbtn, query, level, targets, use_isolario, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = false);
         querybtn.innerText = 'Go';
     };
 
@@ -574,11 +577,17 @@
         local_info.className = 'control';
     }
 
-    document.getElementById('ccbtn').onclick = () => {
+    cscbtn.onclick = () => {
         prefixes_cache = {};
         paths_cache = {};
         isolario_cache = {};
         routeview_cache = {};
+        asname_cache = {};
+        localStorage.asname_cache = undefined;
+        m_log('Cached entries removed.');
+    };
+
+    cpcbtn.onclick = () => {
         asname_cache = {};
         localStorage.asname_cache = undefined;
         m_log('Cached entries removed.');
