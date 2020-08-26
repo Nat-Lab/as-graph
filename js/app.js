@@ -401,6 +401,7 @@
         prefixes_cache = {};
         paths_cache = {};
         isolario_cache = {};
+        routeview_cache = {};
         asname_cache = {};
         localStorage.asname_cache = undefined;
         m_log('Cached entries removed.');
