@@ -247,7 +247,8 @@
             irr.routes.forEach(r => {
                 var tr = document.createElement('tr');
                 tr.className = 'pfxinfo_irr_item';
-                if (origin.includes(r.origin.toString()) && r.in_bgp && r.in_whois) tr.className += ' irr_valid';
+                if (origin.includes(r.origin.toString()) && r.in_whois) tr.className += ' irr_valid';
+                if (!r.in_bgp) tr.className += ' unannounced';
 
                 var td_pfx = document.createElement('td');
                 td_pfx.className = 'mono';
@@ -277,6 +278,7 @@
 
                 var td_irrs = document.createElement('td');
                 td_irrs.className = 'mono';
+                if (r.in_bgp) r.irr_sources.push('BGP');
                 td_irrs.innerText = r.irr_sources.join(', ');
                 tr.appendChild(td_irrs);
 

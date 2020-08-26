@@ -1,11 +1,15 @@
 html {
     box-sizing: border-box;
     font-size: 16px;
+    color: #333;
+}
+
+a {
+    color: #333;
 }
 
 *, *:before, *:after {
     box-sizing: inherit;
-    color: #333;
 }
 
 body, h1, h2, h3, h4, h5, h6, p, ol, ul {
@@ -170,6 +174,11 @@ input[type=text], select {
     display: none;
 }
 
-.irr_valid {
+.pfxinfo_irr_item.irr_valid {
     background-color: #bfd;
+}
+
+.pfxinfo_irr_item.unannounced,
+.pfxinfo_irr_item.unannounced a {
+    color: #aaa;
 }
