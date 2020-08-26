@@ -27,10 +27,6 @@ img {
     margin: 1em;
 }
 
-.header {
-    margin-bottom: 1em;
-}
-
 .header > .title {
     padding-left: 12px;
     border-left: 7.416px solid #333;
@@ -42,11 +38,7 @@ img {
     color: #888;
 }
 
-.box {
-    margin-bottom: 1em;
-}
-
-.control {
+.control, .info {
     margin-top: .5em;
 }
 
@@ -68,8 +60,59 @@ img {
     display: none;
 }
 
-.controlboxes {
+.boxes {
+    display: flex;
+    flex-direction: row;
+}
+
+.box {
+    margin-top: .8em;
+    margin-right: 1em;
+}
+
+@media(max-width: 1024px) {
+    .boxes {
+        flex-wrap: wrap;
+    }
+
+    .box {
+        margin-right: 0;
+
+    }
+}
+
+.controlbox, .infobox {
     max-width: 768px;
+}
+
+.resource {
+    margin-top: .5em;
+}
+
+.boxtitle {
+    border-left: 4px solid #333;
+    padding-left: .5em;
+}
+
+.infotitle {
+    border-left: 2px solid #333;
+    padding-left: .5em;
+    font-size: 1.1em;
+    margin-bottom: .25em;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    text-align: left;
+    padding: 4px;
+}
+
+th {
+    border-bottom: 2px solid #333;
 }
 
 .panel {

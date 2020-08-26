@@ -18,10 +18,12 @@
                 BGP route propagation debugger.
             </div>
         </div>
-        <div class="box controlboxes">
-            <div class="controlbox">
+        <div class="boxes">
+            <div class="box controlbox">
+                <h2 class="boxtitle">Query</h2>
                 <div class="control hide" id="local_info">
-                    Your network: <a class="mono" href="#" id="lpfxbtn"></a> (<a class="mono" href="#" id="lasnbtn"></a>)
+                    Your network: <a class="mono" href="#" id="lpfxbtn"></a> (<a class="mono" href="#"
+                        id="lasnbtn"></a>)
                     <div id="ext_sources">
                         View you network on:
                     </div>
@@ -29,7 +31,8 @@
                 <div class="control">
                     <div class="panel">
                         <label for="query">Show propagation from/of</label>
-                        <div><input type="text" id="query" autocomplete="off" spellcheck="false" placeholder="ASN, IP or prefix..."></div>
+                        <div><input type="text" id="query" autocomplete="off" spellcheck="false"
+                                placeholder="ASN, IP or prefix..."></div>
                         <label for="level">to the following network(s):</label>
                         <div>
                             <select id="level">
@@ -53,23 +56,35 @@
                 <div class="control">
                     <div class="panel">
                         <div class="option">
-                            <input type="checkbox" id="use_isolario"> <label for="use_isolario">Include Isolario data</label>
-                            <span class="option_descr">By default, <span class="mono">as-graph</span> takes data from RIPE RIS only. Enable this option to load paths from Isolario project. Note that loading data from Isolario can be slow and may fails.</span>
+                            <input type="checkbox" id="use_isolario"> <label for="use_isolario">Include Isolario
+                                data</label>
+                            <span class="option_descr">By default, <span class="mono">as-graph</span> takes data from
+                                RIPE RIS only. Enable this option to load paths from Isolario project. Note that loading
+                                data from Isolario can be slow and may fails.</span>
                         </div>
                         <div class="option">
-                            <input type="checkbox" id="use_routeview"> <label for="use_routeview">Include RouteViews data</label>
-                            <span class="option_descr">By default, <span class="mono">as-graph</span> takes data from RIPE RIS only. Enable this option to load paths from RouteViews project. Note that loading data from RouteViews can be slow and may fails.</span>
+                            <input type="checkbox" id="use_routeview"> <label for="use_routeview">Include RouteViews
+                                data</label>
+                            <span class="option_descr">By default, <span class="mono">as-graph</span> takes data from
+                                RIPE RIS only. Enable this option to load paths from RouteViews project. Note that
+                                loading data from RouteViews can be slow and may fails.</span>
                         </div>
                         <div class="option">
-                            <input type="checkbox" id="use_asname"> <label for="use_asname">Show <span class="mono">as-name</span> instead of ASN</label>
-                            <span class="option_descr">Enable this option to use <span class="mono">as-name</span> as graph labels. Note that you can always hover on labels to check their <span class="mono">as-name</span>.</span>
+                            <input type="checkbox" id="use_asname"> <label for="use_asname">Show <span
+                                    class="mono">as-name</span> instead of ASN</label>
+                            <span class="option_descr">Enable this option to use <span class="mono">as-name</span> as
+                                graph labels. Note that you can always hover on labels to check their <span
+                                    class="mono">as-name</span>.</span>
                         </div>
                         <div class="option">
-                            <input type="checkbox" id="group_large_isps"> <label for="group_large_isps">Group large ISPs</label>
-                            <span class="option_descr">Enable this option to group and highlight large ISPs in a separate cluster.</span>
+                            <input type="checkbox" id="group_large_isps"> <label for="group_large_isps">Group large
+                                ISPs</label>
+                            <span class="option_descr">Enable this option to group and highlight large ISPs in a
+                                separate cluster.</span>
                         </div>
                         <div class="option">
-                            <input type="checkbox" id="vertical_graph"> <label for="vertical_graph">Use vertically oriented graph</label>
+                            <input type="checkbox" id="vertical_graph"> <label for="vertical_graph">Use vertically
+                                oriented graph</label>
                             <span class="option_descr">Enable this option to orient the graph vertically.</span>
                         </div>
                         <div class="option">
@@ -82,13 +97,57 @@
                         </div>
                         <div class="option">
                             <button class="button" id="ccbtn">Clear cache</button>
-                            <span class="option_descr"><span class="mono">as-graph</span> caches <span class="mono">as-path</span>s and prefixes lists throughout the session. <span class="mono">as-name</span>s are cached in persistent storage. Click this to remove the cached entries.</span>
+                            <span class="option_descr"><span class="mono">as-graph</span> caches <span
+                                    class="mono">as-path</span>s and prefixes lists throughout the session. <span
+                                    class="mono">as-name</span>s are cached in persistent storage. Click this to remove
+                                the cached entries.</span>
                         </div>
                     </div>
                     <div class="control">
                         <button class="button" id="querybtn">Go</button>
                     </div>
                 </div>
+            </div>
+            <div class="box infobox hide" id="details">
+                <h2 class="boxtitle">Details</h2>
+                <div id="prefixinfo" class="">
+                    <h3 class="resource mono" id="pfxinfo_title"></h3>
+                    <div class="info">
+                        <div class="overview">
+                            <span id="pfxinfo_asn"></span>, allocated under <span id="pfxinfo_rir"></span>.
+                        </div>
+                    </div>
+                    <div class="info">
+                        <h4 class="infotitle">
+                            Routing Registry
+                        </h4>
+                        <table>
+                            <tbody id="pfxinfo_irrs">
+                                <tr>
+                                    <th>Prefix</th>
+                                    <th>In BGP</th>
+                                    <th>In whois</th>
+                                    <th>Origin</th>
+                                    <th>IRR sources</th>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="info">
+                        <h4 class="infotitle">
+                            Peerings
+                        </h4>
+                        <table>
+                            <tbody id="pfxinfo_peers">
+                                <tr>
+                                    <th>Peer</th>
+                                    <th># of paths</th>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="asinfo" class=""></div>
             </div>
         </div>
         <div class="box display" id="display">

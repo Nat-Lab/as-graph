@@ -13,7 +13,11 @@
     var use_asname = document.getElementById('use_asname');
     var vertical_graph = document.getElementById('vertical_graph');
     var level_descr = document.getElementById('level_descr');
-    var group_large_isps = document.getElementById('group_large_isps');;
+    var group_large_isps = document.getElementById('group_large_isps');
+
+    var details = document.getElementById('details');
+    var prefixinfo = document.getElementById('prefixinfo');
+    var asinfo = document.getElementById('asinfo');
 
     var paths_cache = {};
     var prefixes_cache = {};
@@ -102,6 +106,9 @@
 
     var disable = () => {
         [querybtn, query, level, targets, use_isolario, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = true);
+        details.className = 'box infobox hide';
+        prefixinfo.className = 'hide';
+        asinfo.className = 'hide';
         querybtn.innerText = 'Loading...';
     };
     var enable = () => {
@@ -196,6 +203,68 @@
         var lvl = level.value;
         var paths = [];
 
+        if(poas.length == 1) {
+            var poa = poas[0];
+
+            document.getElementById('pfxinfo_title').innerText = poa;
+
+            var [routing, irr, rir] = await Promise.all([
+                ripeGet(`routing-status/data.json?resource=${poa}`),
+                ripeGet(`prefix-routing-consistency/data.json?resource=${poa}`),
+                ripeGet(`rir/data.json?resource=${poa}`)
+            ]);
+
+            var origin = routing.last_seen.origin;
+            if (origin) document.getElementById('pfxinfo_asn').innerText = `Announced by AS${origin}`;
+            else document.getElementById('pfxinfo_asn').innerText = `Not announced`;
+
+            document.getElementById('pfxinfo_rir').innerText = rir.rirs[0].rir;
+            var irrtable = document.getElementById('pfxinfo_irrs');
+            [...document.getElementsByClassName('pfxinfo_irr_item')].forEach(i => i.remove());
+
+            irr.routes.forEach(r => {
+                var tr = document.createElement('tr');
+                tr.className = 'pfxinfo_irr_item';
+
+                var td_pfx = document.createElement('td');
+                td_pfx.className = 'mono';
+                var td_pfx_a = document.createElement('a');
+                td_pfx_a.href = `#${r.prefix}`;
+                td_pfx_a.onclick = () => doQuery(r.prefix);
+                td_pfx_a.innerText = r.prefix;
+                td_pfx.appendChild(td_pfx_a);
+                tr.appendChild(td_pfx);
+
+                var td_in_bgp = document.createElement('td');
+                td_in_bgp.innerText = r.in_bgp ? 'Yes' : 'No';
+                tr.appendChild(td_in_bgp);
+
+                var td_in_whois = document.createElement('td');
+                td_in_whois.innerText = r.td_in_whois ? 'Yes' : 'No';
+                tr.appendChild(td_in_whois);
+
+                var td_origin = document.createElement('td');
+                td_origin.className = 'mono';
+                var td_origin_a = document.createElement('a');
+                td_origin_a.href = `#AS${r.origin}`;
+                td_origin_a.onclick = () => doQuery(`AS${r.origin}`);
+                td_origin_a.innerText = `AS${r.origin} ${r.asn_name}`;
+                td_origin.appendChild(td_origin_a);
+                tr.appendChild(td_origin);
+
+                var td_irrs = document.createElement('td');
+                td_irrs.className = 'mono';
+                td_irrs.innerText = r.irr_sources.join(', ');
+                tr.appendChild(td_irrs);
+
+                irrtable.appendChild(tr);
+            });
+
+            details.className = 'box infobox';
+            prefixinfo.className = '';
+
+        }
+
         await Promise.all(poas.map(async poa => {
             try {
                 m_log(`getGraphByPrefixesOrAddresses: constructing graph with prefix/IP ${poa}...`);
@@ -256,6 +325,7 @@
             paths = paths.concat(routeview_paths);
         }
     
+        var peer_counts = {};
         var asns = new Set();
         var edges = new Set();
 
@@ -266,6 +336,11 @@
 
             path.forEach((asn, i, a) => {
                 if (last && last != asn && draw_this[lvl](a, i)) {
+                    if (i == 1) {
+                        if (!peer_counts[asn]) peer_counts[asn] = 1;
+                        else peer_counts[asn]++; 
+                    }
+
                     asns.add(last);
                     asns.add(asn);
                     edges.add(`${last},${asn}`);
@@ -281,7 +356,31 @@
 
         m_log(`getPrefixesByAs: getting names for ${asns_arr.length} asn(s).`);
         var as_names = await getAsNames(asns_arr);
-        m_log(`getPrefixesByAs: done.`)
+        m_log(`getPrefixesByAs: done.`);
+
+        var peerstable = document.getElementById('pfxinfo_peers');
+        [...document.getElementsByClassName('pfxinfo_peer_item')].forEach(i => i.remove());
+
+        Object.keys(peer_counts).forEach(asn => {
+            var tr = document.createElement('tr');
+            tr.className = 'pfxinfo_peer_item';
+            
+            var td_asn = document.createElement('td');
+            td_asn.className = 'mono';
+            var td_asn_a = document.createElement('a');
+            td_asn_a.href = `#AS${asn}`;
+            td_asn_a.onclick = () => doQuery(`AS${asn}`);
+            td_asn_a.innerText = `AS${asn} ${as_names[asn]}`;
+            td_asn.appendChild(td_asn_a);
+            tr.appendChild(td_asn);
+            
+            var td_count = document.createElement('td');
+            td_count.className = 'mono';
+            td_count.innerText = peer_counts[asn];
+            tr.appendChild(td_count);
+
+            peerstable.appendChild(tr);
+        });
 
         edges.forEach(edge => {
             var [src, dst] = edge.split(',');
