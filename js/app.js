@@ -121,12 +121,14 @@
         prefixinfo.className = 'hide';
         asinfo.className = 'hide';
         peerinfo.className = 'hide';
+        display.className = 'hide';
         querybtn.innerText = 'Loading...';
     };
     var enable = () => {
+        details.className = 'box infobox';
+        display.className = '';
         [querybtn, query, level, targets, use_isolario, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = false);
         querybtn.innerText = 'Go';
-
     };
 
     var m_log = function(msg) {
@@ -228,7 +230,9 @@
             ]);
 
             var origin = routing.last_seen.origin;
-            if (origin) document.getElementById('pfxinfo_asn').innerText = `Announced by AS${origin}`;
+            origin = origin ? origin.split(',') : [];
+            
+            if (origin.length > 0) document.getElementById('pfxinfo_asn').innerText = `Announced by ${origin.map(o => `AS${o}`).join(', ')}`;
             else document.getElementById('pfxinfo_asn').innerText = `Not announced`;
 
             document.getElementById('pfxinfo_rir').innerText = rir.rirs[0].rir;
@@ -238,6 +242,7 @@
             irr.routes.forEach(r => {
                 var tr = document.createElement('tr');
                 tr.className = 'pfxinfo_irr_item';
+                if (origin.includes(r.origin.toString())) tr.className += ' irr_valid';
 
                 var td_pfx = document.createElement('td');
                 td_pfx.className = 'mono';
@@ -273,7 +278,6 @@
                 irrtable.appendChild(tr);
             });
 
-            details.className = 'box infobox';
             prefixinfo.className = '';
             peerinfo.className = '';
         }
@@ -490,7 +494,6 @@
                 asinfo_ext_sources.appendChild(a);
                 asinfo_ext_sources.appendChild(document.createTextNode(' '));
             });
-            details.className = 'box infobox';
             asinfo.className = '';
             peerinfo.className = '';
         }
