@@ -12,6 +12,7 @@
     var use_asname = document.getElementById('use_asname');
     var vertical_graph = document.getElementById('vertical_graph');
     var level_descr = document.getElementById('level_descr');
+    var group_large_isps = document.getElementById('group_large_isps');;
 
 
     var paths_cache = {};
@@ -23,6 +24,7 @@
         use_isolario.checked = localStorage.use_isolario === "true";
         use_asname.checked = localStorage.use_asname === "true";
         vertical_graph.checked = localStorage.vertical_graph === "true";
+        group_large_isps.checked = localStorage.group_large_isps === "true";
         asname_cache = JSON.parse(localStorage.asname_cache);
     } catch {
         asname_cache = {};
@@ -82,6 +84,7 @@
         localStorage.use_isolario = use_isolario.checked;
         localStorage.use_asname = use_asname.checked;
         localStorage.vertical_graph = vertical_graph.checked;
+        localStorage.group_large_isps = group_large_isps.checked;
     };
 
     var level_change = () => {
@@ -95,11 +98,11 @@
     [use_isolario, use_asname, vertical_graph].forEach(o => o.addEventListener('change', saveOptions));
 
     var disable = () => {
-        [querybtn, query, level, targets, use_isolario, use_asname, vertical_graph].forEach(e => e.disabled = true);
+        [querybtn, query, level, targets, use_isolario, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = true);
         querybtn.innerText = 'Loading...';
     };
     var enable = () => {
-        [querybtn, query, level, targets, use_isolario, use_asname, vertical_graph].forEach(e => e.disabled = false);
+        [querybtn, query, level, targets, use_isolario, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = false);
         querybtn.innerText = 'Go';
 
     };
@@ -250,6 +253,7 @@
         });
 
         var links = new Set();
+        var isp_cluster = new Set();
 
         var asns_arr = Array.from(asns);
 
@@ -259,20 +263,20 @@
 
         edges.forEach(edge => {
             var [src, dst] = edge.split(',');
-            if (use_asname.checked) {
-                var src_naeme = as_names[src].split(' ')[0];
-                var dst_name = as_names[dst].split(' ')[0];
-                links.add(`"${src_naeme}"->"${dst_name}"`);
-            }
-            else links.add(`AS${src}->AS${dst}`);
+            var src_name = as_names[src].split(' ')[0];
+            var dst_name = as_names[dst].split(' ')[0];
+            var line = use_asname.checked ? `"${src_name}"->"${dst_name}"` : `AS${src}->AS${dst}`;
+            if (group_large_isps.checked && large_isps.includes(src)) isp_cluster.add(use_asname.checked ? `"${src_name}"` : `AS${src}`);
+            if (group_large_isps.checked && large_isps.includes(dst)) isp_cluster.add(use_asname.checked ? `"${dst_name}"` : `AS${dst}`);
+            links.add(line);
         });
 
         asns_arr.forEach(asn => {
-            if (use_asname.checked) links.add(`"${as_names[asn].split(' ')[0]}" [URL="https://bgp.he.net/AS${asn}" tooltip="AS${asn}" shape=rectangle]`);
-            else links.add(`AS${asn} [URL="https://bgp.he.net/AS${asn}" tooltip="${as_names[asn].replace(/"/g, `\\"`)}"]`);
+            if (use_asname.checked) links.add(`"${as_names[asn].split(' ')[0]}" [URL="https://bgp.he.net/AS${asn}" tooltip="AS${asn}" shape=rectangle ${group_large_isps.checked && large_isps.includes(asn) ? 'style=filled' : ''}]`);
+            else links.add(`AS${asn} [URL="https://bgp.he.net/AS${asn}" tooltip="${as_names[asn].replace(/"/g, `\\"`)}" ${group_large_isps.checked && large_isps.includes(asn) ? 'style=filled' : ''}]`);
         });
 
-        var graph = `digraph Propagation{${vertical_graph.checked ? '' : 'rankdir="LR";'}${Array.from(links).join(';')}}`;
+        var graph = `digraph Propagation{${vertical_graph.checked ? '' : 'rankdir="LR";'}${Array.from(links).join(';')}${group_large_isps.checked ? `subgraph cluster{label="Large ISPs";${Array.from(isp_cluster).join(';')}}` : ''}}`;
         await render(graph);
     };
 
