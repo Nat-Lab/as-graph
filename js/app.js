@@ -262,7 +262,6 @@
 
             details.className = 'box infobox';
             prefixinfo.className = '';
-
         }
 
         await Promise.all(poas.map(async poa => {
@@ -422,12 +421,63 @@
 
         if (!prefixes_cache[as]) {
             var rslt = await ripeGet(`announced-prefixes/data.json?resource=${as}`);
-            prefixes = rslt.prefixes.map(p => p.prefix);
+            prefixes = rslt.prefixes;
             prefixes_cache[as] = prefixes;
             m_log(`getPrefixesByAs: done, found ${prefixes.length} prefix(es).`);
         } else {
             prefixes = prefixes_cache[as];
             m_log(`getPrefixesByAs: done, found ${prefixes.length} prefix(es) (cached).`);
+        }
+
+        var prxtable = document.getElementById('asninfo_announced');
+        [...document.getElementsByClassName('asninfo_announced_item')].forEach(i => i.remove());
+        prefixes.forEach(prefix => {
+            var tr = document.createElement('tr');
+            tr.className = 'asninfo_announced_item';
+
+            var td = document.createElement('td');
+            td.className = 'mono';
+            var a = document.createElement('a');
+            a.href = `#${prefix.prefix}`;
+            a.onclick = () => doQuery(prefix.prefix);
+            a.innerText = prefix.prefix;
+            td.appendChild(a);
+            tr.appendChild(td);
+
+            var td_start = document.createElement('td');
+            td_start.className = 'mono';
+
+            var td_end = document.createElement('td');
+            td_end.className = 'mono';
+
+            if (prefix.timelines.length > 0) {
+                var tl = prefix.timelines[0];
+                td_start.innerText = tl.starttime;
+                td_end.innerText = tl.endtime;
+            }
+
+            tr.appendChild(td_start);
+            tr.appendChild(td_end);
+
+            prxtable.appendChild(tr);
+        });
+
+        if (prefixes.length > 1) {
+            document.getElementById('asinfo_title').innerText = as;
+            document.getElementById('asinfo_asn').innerText = as;
+
+            var asinfo_ext_sources = document.getElementById('asinfo_ext_sources');
+            asinfo_ext_sources.innerText = '';
+            external_sources.forEach(source => {
+                var a = document.createElement('a');
+                a.innerText = source.name;
+                a.target = '_blank';
+                a.href = `${source.url}${as.replace('AS', '')}`;
+                asinfo_ext_sources.appendChild(a);
+                asinfo_ext_sources.appendChild(document.createTextNode(' '));
+            });
+            details.className = 'box infobox';
+            asinfo.className = '';
         }
 
         if (prefixes.length > 200) {
@@ -437,10 +487,12 @@
             }
         }
 
-        await renderByPrefixesOrAddresses(prefixes);
+        await renderByPrefixesOrAddresses(prefixes.map(p => p.prefix));
     };
 
     var doQuery = async function (target) {
+        if (querybtn.disable) return;
+
         disable();
         if (target) {
             window.location.hash = `${target}`;
