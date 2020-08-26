@@ -111,11 +111,14 @@
         level_descr.innerText = target_descrs[Number.parseInt(level.value)];
     }
 
+    var lock;
+
     level.addEventListener('change', level_change);
 
     [use_isolario, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(o => o.addEventListener('change', saveOptions));
 
     var disable = () => {
+        lock = true;
         [querybtn, query, level, targets, use_isolario, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = true);
         details.className = 'box infobox hide';
         prefixinfo.className = 'hide';
@@ -124,7 +127,9 @@
         display.className = 'hide';
         querybtn.innerText = 'Loading...';
     };
+
     var enable = () => {
+        lock = false;
         details.className = 'box infobox';
         display.className = '';
         [querybtn, query, level, targets, use_isolario, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = false);
@@ -348,16 +353,15 @@
 
         paths.forEach(path => {
             if (ignore_path[lvl](path)) return;
-
             var last;
-
+            var pos = 0;
             path.forEach((asn, i, a) => {
                 if (last && last != asn && draw_this[lvl](a, i)) {
-                    if (i == 1) {
+                    pos++;
+                    if (pos == 1) {
                         if (!peer_counts[asn]) peer_counts[asn] = 1;
                         else peer_counts[asn]++; 
                     }
-
                     asns.add(last);
                     asns.add(asn);
                     edges.add(`${last},${asn}`);
@@ -377,6 +381,8 @@
 
         var peerstable = document.getElementById('pfxinfo_peers');
         [...document.getElementsByClassName('pfxinfo_peer_item')].forEach(i => i.remove());
+
+        console.log(peer_counts);
 
         Object.keys(peer_counts).forEach(asn => {
             var tr = document.createElement('tr');
@@ -410,8 +416,8 @@
         });
 
         asns_arr.forEach(asn => {
-            if (use_asname.checked) links.add(`"${as_names[asn].split(' ')[0]}" [URL="https://bgp.he.net/AS${asn}" tooltip="AS${asn}" shape=rectangle ${group_large_isps.checked && large_isps.includes(asn) ? 'style=filled' : ''}]`);
-            else links.add(`AS${asn} [URL="https://bgp.he.net/AS${asn}" tooltip="${as_names[asn].replace(/"/g, `\\"`)}" ${group_large_isps.checked && large_isps.includes(asn) ? 'style=filled' : ''}]`);
+            if (use_asname.checked) links.add(`"${as_names[asn].split(' ')[0]}" [URL="#AS${asn}" tooltip="AS${asn}" shape=rectangle ${group_large_isps.checked && large_isps.includes(asn) ? 'style=filled' : ''}]`);
+            else links.add(`AS${asn} [URL="#AS${asn}" tooltip="${as_names[asn].replace(/"/g, `\\"`)}" ${group_large_isps.checked && large_isps.includes(asn) ? 'style=filled' : ''}]`);
         });
 
         var graph = `digraph Propagation{${vertical_graph.checked ? '' : 'rankdir="LR";'}${Array.from(links).join(';')}${group_large_isps.checked ? `subgraph cluster{label="Large ISPs";${Array.from(isp_cluster).join(';')}}` : ''}}`;
@@ -509,7 +515,7 @@
     };
 
     var doQuery = async function (target) {
-        if (querybtn.disable) return;
+        if (lock) return; // fixme
 
         disable();
         if (target) {
@@ -575,4 +581,7 @@
         localStorage.asname_cache = undefined;
         m_log('Cached entries removed.');
     };
+
+    window.onhashchange = () => doQuery();
+
 })();
