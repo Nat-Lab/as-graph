@@ -112,6 +112,7 @@
     var m_err = function(msg) {
         console.error(msg);
         log.innerText = `[ERROR] ${msg}\n` + log.innerText;
+        alert(`ERROR: ${msg}`);
     }
 
     var render = async function (graph) {
