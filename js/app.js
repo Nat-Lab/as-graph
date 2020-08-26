@@ -221,10 +221,11 @@
         return { ...names, ...cache_hit };
     };
 
-    var renderByPrefixesOrAddresses = async function (poas) {
+    var renderByPrefixesOrAddresses = async function (poas, as) {
         querybtn.innerText = 'Loading paths...';
         var lvl = level.value;
         var paths = [];
+        as = as ? as : '';
 
         if(poas.length == 1) {
             var poa = poas[0];
@@ -293,18 +294,19 @@
         }
 
         await Promise.all(poas.map(async poa => {
+            var cache_key = `${poa}${as}`;
             try {
                 m_log(`getGraphByPrefixesOrAddresses: constructing graph with prefix/IP ${poa}...`);
 
                 m_log(`getGraphByPrefixesOrAddresses: fetching paths for ${poa} from RIPE RIS...`);
-                if (!paths_cache[poa]) {
+                if (!paths_cache[cache_key]) {
                     var rslt = await ripeGet(`looking-glass/data.json?resource=${poa}`);
                     var _paths = rslt.rrcs.map(rrc => rrc.peers).flat().map(peer => peer.as_path.split(' ').reverse());
                     paths = paths.concat(_paths);
-                    paths_cache[poa] = paths;
+                    paths_cache[cache_key] = paths;
                     m_log(`getGraphByPrefixesOrAddresses: found ${_paths.length} path(s) for ${poa} in RIPE RIS.`);
                 } else {
-                    var _paths = paths_cache[poa];
+                    var _paths = paths_cache[cache_key];
                     m_log(`getGraphByPrefixesOrAddresses: found ${_paths.length} path(s) for ${poa} in RIPE RIS (cached).`);
                     paths = paths.concat(_paths);
                 }
@@ -516,7 +518,7 @@
             }
         }
 
-        await renderByPrefixesOrAddresses(prefixes.map(p => p.prefix));
+        await renderByPrefixesOrAddresses(prefixes.map(p => p.prefix), as);
     };
 
     var doQuery = async function (target) {
