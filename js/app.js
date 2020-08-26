@@ -247,7 +247,7 @@
             irr.routes.forEach(r => {
                 var tr = document.createElement('tr');
                 tr.className = 'pfxinfo_irr_item';
-                if (origin.includes(r.origin.toString())) tr.className += ' irr_valid';
+                if (origin.includes(r.origin.toString()) && r.in_bgp && r.in_whois) tr.className += ' irr_valid';
 
                 var td_pfx = document.createElement('td');
                 td_pfx.className = 'mono';
@@ -263,7 +263,7 @@
                 tr.appendChild(td_in_bgp);
 
                 var td_in_whois = document.createElement('td');
-                td_in_whois.innerText = r.td_in_whois ? 'Yes' : 'No';
+                td_in_whois.innerText = r.in_whois ? 'Yes' : 'No';
                 tr.appendChild(td_in_whois);
 
                 var td_origin = document.createElement('td');
