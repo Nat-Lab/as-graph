@@ -9,19 +9,21 @@
     var targets = document.getElementById('targets');
 
     var use_isolario = document.getElementById('use_isolario');
+    var use_routeview = document.getElementById('use_routeview');
     var use_asname = document.getElementById('use_asname');
     var vertical_graph = document.getElementById('vertical_graph');
     var level_descr = document.getElementById('level_descr');
     var group_large_isps = document.getElementById('group_large_isps');;
 
-
     var paths_cache = {};
     var prefixes_cache = {};
     var isolario_cache = {};
+    var routeview_cache = {};
     var asname_cache;
 
     try {
         use_isolario.checked = localStorage.use_isolario === "true";
+        use_routeview.checked = localStorage.use_routeview === "true";
         use_asname.checked = localStorage.use_asname === "true";
         vertical_graph.checked = localStorage.vertical_graph === "true";
         group_large_isps.checked = localStorage.group_large_isps === "true";
@@ -85,6 +87,7 @@
         localStorage.use_asname = use_asname.checked;
         localStorage.vertical_graph = vertical_graph.checked;
         localStorage.group_large_isps = group_large_isps.checked;
+        localStorage.use_routeview = use_routeview.checked;
     };
 
     var level_change = () => {
@@ -95,14 +98,14 @@
 
     level.addEventListener('change', level_change);
 
-    [use_isolario, use_asname, vertical_graph, group_large_isps].forEach(o => o.addEventListener('change', saveOptions));
+    [use_isolario, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(o => o.addEventListener('change', saveOptions));
 
     var disable = () => {
-        [querybtn, query, level, targets, use_isolario, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = true);
+        [querybtn, query, level, targets, use_isolario, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = true);
         querybtn.innerText = 'Loading...';
     };
     var enable = () => {
-        [querybtn, query, level, targets, use_isolario, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = false);
+        [querybtn, query, level, targets, use_isolario, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = false);
         querybtn.innerText = 'Go';
 
     };
@@ -150,14 +153,14 @@
                 } else reject('API: got non-200 response.');
             };
         });
-    }
+    };
 
-    var isolarioGetPaths = function (query) {
-        querybtn.innerText = 'Loading isolario paths...';
+    var thirdPartyGetPaths = function (source, query) {
+        querybtn.innerText = `Loading ${source} paths...`;
 
         return new Promise((resolve, reject) => {
             var xhr = new XMLHttpRequest();
-            xhr.open('POST', `https://api2.nat.moe/isolario.api`);
+            xhr.open('POST', `https://api2.nat.moe/${source}.api`);
             xhr.send(query.toLowerCase());
             xhr.onload = function () {
                 if (this.status == 200) {
@@ -223,7 +226,7 @@
 
             var isolario_paths;
             if (!isolario_cache[isolario_query]) {
-                isolario_paths = await isolarioGetPaths(isolario_query);
+                isolario_paths = await thirdPartyGetPaths('isolario', isolario_query);
                 isolario_cache[isolario_query] = isolario_paths;
                 m_log(`getPrefixesByAs: done, got ${isolario_paths.length} path(s) from isolario.`);
             } else {
@@ -232,6 +235,25 @@
             }
 
             paths = paths.concat(isolario_paths);
+        }
+
+        // todo
+        if (poas.join(',').includes('/') && use_routeview.checked) {
+            // fixme
+            var routeview_query = poas.join('\n');
+            m_log(`getPrefixesByAs: getting paths list from routeview...`);
+
+            var routeview_paths;
+            if (!routeview_cache[routeview_query]) {
+                routeview_paths = await thirdPartyGetPaths('routeview', routeview_query);
+                routeview_cache[routeview_query] = routeview_paths;
+                m_log(`getPrefixesByAs: done, got ${routeview_paths.length} path(s) from routeview.`);
+            } else {
+                routeview_paths = routeview_cache[routeview_query];
+                m_log(`getPrefixesByAs: done, got ${routeview_paths.length} path(s) from routeview (cached).`);
+            }
+
+            paths = paths.concat(routeview_paths);
         }
     
         var asns = new Set();
