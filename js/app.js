@@ -3,6 +3,7 @@
     var log = document.getElementById('log');
 
     var querybtn = document.getElementById('querybtn');
+    var jumpbtn = document.getElementById('jumpbtn');
     var query = document.getElementById('query');
 
     var level = document.getElementById('level');
@@ -82,9 +83,19 @@
         (path, index) => path.slice(index).some(asn => targets.value.replace(/(as| )/gi, '').split(',').includes(asn))
     ];
 
-
+    jumpbtn.onclick = () => display.scrollIntoView();
     query.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
     targets.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
+
+    var isElementXPercentInViewport = function(el, percentVisible) {
+        var rect = el.getBoundingClientRect();
+        var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
+      
+        return !(
+          Math.floor(100 - (((rect.top >= 0 ? 0 : rect.top) / +-(rect.height / 1)) * 100)) < percentVisible ||
+          Math.floor(100 - ((rect.bottom - windowHeight) / rect.height) * 100) < percentVisible
+        )
+    };
 
     var saveOptions = () => {
         localStorage.use_isolario = use_isolario.checked;
@@ -140,9 +151,10 @@
             element.setAttribute('width', '100%');
             element.removeAttribute('height');
             display.appendChild(element);
-            element.scrollIntoView();
-            m_log('render: done.');
 
+            jumpbtn.className = isElementXPercentInViewport(element, 10) ? 'hide' : '';
+
+            m_log('render: done.');
         } catch(err) {
             m_err(err);
         }
