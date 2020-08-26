@@ -95,7 +95,7 @@
 
     level.addEventListener('change', level_change);
 
-    [use_isolario, use_asname, vertical_graph].forEach(o => o.addEventListener('change', saveOptions));
+    [use_isolario, use_asname, vertical_graph, group_large_isps].forEach(o => o.addEventListener('change', saveOptions));
 
     var disable = () => {
         [querybtn, query, level, targets, use_isolario, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = true);
