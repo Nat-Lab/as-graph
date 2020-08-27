@@ -87,16 +87,16 @@
     ];
 
     jumpbtn.onclick = () => display.scrollIntoView();
-    query.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
-    targets.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } } );
+    query.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } });
+    targets.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } });
 
-    var isElementXPercentInViewport = function(el, percentVisible) {
+    var isElementXPercentInViewport = function (el, percentVisible) {
         var rect = el.getBoundingClientRect();
         var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
-      
+
         return !(
-          Math.floor(100 - (((rect.top >= 0 ? 0 : rect.top) / +-(rect.height / 1)) * 100)) < percentVisible ||
-          Math.floor(100 - ((rect.bottom - windowHeight) / rect.height) * 100) < percentVisible
+            Math.floor(100 - (((rect.top >= 0 ? 0 : rect.top) / +-(rect.height / 1)) * 100)) < percentVisible ||
+            Math.floor(100 - ((rect.bottom - windowHeight) / rect.height) * 100) < percentVisible
         )
     };
 
@@ -139,12 +139,12 @@
         querybtn.innerText = 'Go';
     };
 
-    var m_log = function(msg) {
+    var m_log = function (msg) {
         console.log(msg);
         log.innerText = `[INFO ] ${msg}\n` + log.innerText;
     }
 
-    var m_err = function(msg) {
+    var m_err = function (msg) {
         console.error(msg);
         log.innerText = `[ERROR] ${msg}\n` + log.innerText;
         alert(`ERROR: ${msg}`);
@@ -165,7 +165,7 @@
             jumpbtn.className = isElementXPercentInViewport(element, 10) ? 'hide' : '';
 
             m_log('render: done.');
-        } catch(err) {
+        } catch (err) {
             m_err(err);
         }
     };
@@ -229,70 +229,74 @@
         var paths = [];
         as = as ? as : '';
 
-        if(poas.length == 1) {
+        if (poas.length == 1) {
             var poa = poas[0];
 
             document.getElementById('pfxinfo_title').innerText = poa;
 
-            var [routing, irr, rir] = await Promise.all([
-                ripeGet(`routing-status/data.json?resource=${poa}`),
-                ripeGet(`prefix-routing-consistency/data.json?resource=${poa}`),
-                ripeGet(`rir/data.json?resource=${poa}`)
-            ]);
+            try {
+                var [routing, irr, rir] = await Promise.all([
+                    ripeGet(`routing-status/data.json?resource=${poa}`),
+                    ripeGet(`prefix-routing-consistency/data.json?resource=${poa}`),
+                    ripeGet(`rir/data.json?resource=${poa}`)
+                ]);
 
-            var origin = routing.last_seen.origin;
-            origin = origin ? origin.split(',') : [];
-            
-            if (origin.length > 0) document.getElementById('pfxinfo_asn').innerText = `Announced by ${origin.map(o => `AS${o}`).join(', ')}`;
-            else document.getElementById('pfxinfo_asn').innerText = `Not announced`;
+                var origin = routing.last_seen.origin;
+                origin = origin ? origin.split(',') : [];
 
-            document.getElementById('pfxinfo_rir').innerText = rir.rirs[0].rir;
-            var irrtable = document.getElementById('pfxinfo_irrs');
-            [...document.getElementsByClassName('pfxinfo_irr_item')].forEach(i => i.remove());
+                if (origin.length > 0) document.getElementById('pfxinfo_asn').innerText = `Announced by ${origin.map(o => `AS${o}`).join(', ')}`;
+                else document.getElementById('pfxinfo_asn').innerText = `Not announced`;
 
-            irr.routes.forEach(r => {
-                var tr = document.createElement('tr');
-                tr.className = 'pfxinfo_irr_item';
-                if (origin.includes(r.origin.toString()) && r.in_whois) tr.className += ' irr_valid';
-                if (!r.in_bgp) tr.className += ' unannounced';
+                document.getElementById('pfxinfo_rir').innerText = rir.rirs[0].rir;
+                var irrtable = document.getElementById('pfxinfo_irrs');
+                [...document.getElementsByClassName('pfxinfo_irr_item')].forEach(i => i.remove());
 
-                var td_pfx = document.createElement('td');
-                td_pfx.className = 'mono';
-                var td_pfx_a = document.createElement('a');
-                td_pfx_a.href = `#${r.prefix}`;
-                td_pfx_a.onclick = () => doQuery(r.prefix);
-                td_pfx_a.innerText = r.prefix;
-                td_pfx.appendChild(td_pfx_a);
-                tr.appendChild(td_pfx);
+                irr.routes.forEach(r => {
+                    var tr = document.createElement('tr');
+                    tr.className = 'pfxinfo_irr_item';
+                    if (origin.includes(r.origin.toString()) && r.in_whois) tr.className += ' irr_valid';
+                    if (!r.in_bgp) tr.className += ' unannounced';
 
-                var td_in_bgp = document.createElement('td');
-                td_in_bgp.innerText = r.in_bgp ? 'Yes' : 'No';
-                tr.appendChild(td_in_bgp);
+                    var td_pfx = document.createElement('td');
+                    td_pfx.className = 'mono';
+                    var td_pfx_a = document.createElement('a');
+                    td_pfx_a.href = `#${r.prefix}`;
+                    td_pfx_a.onclick = () => doQuery(r.prefix);
+                    td_pfx_a.innerText = r.prefix;
+                    td_pfx.appendChild(td_pfx_a);
+                    tr.appendChild(td_pfx);
 
-                var td_in_whois = document.createElement('td');
-                td_in_whois.innerText = r.in_whois ? 'Yes' : 'No';
-                tr.appendChild(td_in_whois);
+                    var td_in_bgp = document.createElement('td');
+                    td_in_bgp.innerText = r.in_bgp ? 'Yes' : 'No';
+                    tr.appendChild(td_in_bgp);
 
-                var td_origin = document.createElement('td');
-                td_origin.className = 'mono';
-                var td_origin_a = document.createElement('a');
-                td_origin_a.href = `#AS${r.origin}`;
-                td_origin_a.onclick = () => doQuery(`AS${r.origin}`);
-                td_origin_a.innerText = `AS${r.origin} ${r.asn_name}`;
-                td_origin.appendChild(td_origin_a);
-                tr.appendChild(td_origin);
+                    var td_in_whois = document.createElement('td');
+                    td_in_whois.innerText = r.in_whois ? 'Yes' : 'No';
+                    tr.appendChild(td_in_whois);
 
-                var td_irrs = document.createElement('td');
-                td_irrs.className = 'mono';
-                if (r.in_bgp) r.irr_sources.push('BGP');
-                td_irrs.innerText = r.irr_sources.join(', ');
-                tr.appendChild(td_irrs);
+                    var td_origin = document.createElement('td');
+                    td_origin.className = 'mono';
+                    var td_origin_a = document.createElement('a');
+                    td_origin_a.href = `#AS${r.origin}`;
+                    td_origin_a.onclick = () => doQuery(`AS${r.origin}`);
+                    td_origin_a.innerText = `AS${r.origin} ${r.asn_name}`;
+                    td_origin.appendChild(td_origin_a);
+                    tr.appendChild(td_origin);
 
-                irrtable.appendChild(tr);
-            });
+                    var td_irrs = document.createElement('td');
+                    td_irrs.className = 'mono';
+                    if (r.in_bgp) r.irr_sources.push('BGP');
+                    td_irrs.innerText = r.irr_sources.join(', ');
+                    tr.appendChild(td_irrs);
 
-            prefixinfo.className = '';
-            peerinfo.className = '';
+                    irrtable.appendChild(tr);
+                });
+
+                prefixinfo.className = '';
+                peerinfo.className = '';
+            } catch (err) {
+                m_err(err);
+            }
         }
 
         await Promise.all(poas.map(async poa => {
@@ -355,7 +359,7 @@
 
             paths = paths.concat(routeview_paths);
         }
-    
+
         var peer_counts = {};
         var asns = new Set();
         var edges = new Set();
@@ -369,7 +373,7 @@
                     pos++;
                     if (pos == 1) {
                         if (!peer_counts[asn]) peer_counts[asn] = 1;
-                        else peer_counts[asn]++; 
+                        else peer_counts[asn]++;
                     }
                     asns.add(last);
                     asns.add(asn);
@@ -391,12 +395,10 @@
         var peerstable = document.getElementById('pfxinfo_peers');
         [...document.getElementsByClassName('pfxinfo_peer_item')].forEach(i => i.remove());
 
-        console.log(peer_counts);
-
         Object.keys(peer_counts).forEach(asn => {
             var tr = document.createElement('tr');
             tr.className = 'pfxinfo_peer_item';
-            
+
             var td_asn = document.createElement('td');
             td_asn.className = 'mono';
             var td_asn_a = document.createElement('a');
@@ -405,7 +407,7 @@
             td_asn_a.innerText = `AS${asn} ${as_names[asn]}`;
             td_asn.appendChild(td_asn_a);
             tr.appendChild(td_asn);
-            
+
             var td_count = document.createElement('td');
             td_count.className = 'mono';
             td_count.innerText = peer_counts[asn];
@@ -439,7 +441,7 @@
 
         as = as.toUpperCase();
 
-        if(/^[1-9]+[0-9]*/.test(as)) {
+        if (/^[1-9]+[0-9]*/.test(as)) {
             as = `AS${as}`;
             format_ok = true;
         }
