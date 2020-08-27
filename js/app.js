@@ -174,7 +174,7 @@
         return new Promise((resolve, reject) => {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', `https://stat.ripe.net/data/${apiUrl}`);
-            xhr.send();
+            xhr.onerror = () => reject('API: XHR failed. Check your input, or try again later.');
             xhr.onload = function () {
                 if (this.status == 200) {
                     res = JSON.parse(xhr.response);
@@ -182,6 +182,7 @@
                     else reject('API: RIPE API returned not-OK.');
                 } else reject('API: got non-200 response.');
             };
+            xhr.send();
         });
     };
 
@@ -191,12 +192,13 @@
         return new Promise((resolve, reject) => {
             var xhr = new XMLHttpRequest();
             xhr.open('POST', `https://api2.nat.moe/${source}.api`);
-            xhr.send(query.toLowerCase());
             xhr.onload = function () {
                 if (this.status == 200) {
                     resolve(xhr.response.split('\n').map(p => p.split(' ').reverse()).filter(p => p.length > 1 && !p.some(p => p == 23456)));
                 } else reject('API: got non-200 response.');
             };
+            xhr.onerror = () => reject('API: XHR failed. Check your input, or try again later.');
+            xhr.send(query.toLowerCase());
         });
     };
 
