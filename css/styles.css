@@ -46,6 +46,10 @@ img {
     margin-top: .5em;
 }
 
+.panel-item {
+    margin-bottom: .20em;
+}
+
 .log_out {
     min-height: 15em;
     max-height: 15em;

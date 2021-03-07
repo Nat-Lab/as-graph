@@ -30,11 +30,13 @@
                 </div>
                 <div class="control">
                     <div class="panel">
-                        <label for="query">Show propagation from/of</label>
-                        <div><input type="text" id="query" autocomplete="off" spellcheck="false"
-                                placeholder="ASN, IP or prefix..."></div>
-                        <label for="level">to the following network(s):</label>
-                        <div>
+                        <div class="panel-item">
+                            <label for="query">Show propagation from/of</label>
+                            <input type="text" id="query" autocomplete="off" spellcheck="false"
+                                placeholder="ASN, IP or prefix...">
+                        </div>
+                        <div class="panel-item">
+                            <label for="level">to the following network(s):</label>
                             <select id="level">
                                 <option value="-1" disabled>select target(s)...</option>
                                 <option value="0">direct peers/transits</option>
@@ -45,23 +47,22 @@
                                 <option value="5">everything</option>
                                 <option value="6">custom target(s)...</option>
                             </select>
-                        </div>
-                        <div id="level_descr" class="option_descr"></div>
-                        <div>
-                            <input class="hide" type="text" id="targets" autocomplete="off" spellcheck="false"
-                                placeholder="AS6939, AS174, ...">
+                            <div id="level_descr" class="option_descr"></div>
+                            <div>
+                                <input class="hide" type="text" id="targets" autocomplete="off" spellcheck="false"
+                                    placeholder="AS6939, AS174, ...">
+                            </div>
+                        </div>  
+                        <div class="panel-item">
+                            <label for="paths_filter">where the following ASN(s) is in path:</label>
+                            <input type="text" id="paths_filter" autocomplete="off" spellcheck="false"
+                            placeholder="AS4635, AS6939, ...">
+                            <div class="option_descr">Leave empty to show all paths.</div>
                         </div>
                     </div>
                 </div>
                 <div class="control">
                     <div class="panel">
-                        <div class="option">
-                            <input type="checkbox" id="use_isolario"> <label for="use_isolario">Include Isolario
-                                data</label>
-                            <span class="option_descr">By default, <span class="mono">as-graph</span> takes data from
-                                RIPE RIS only. Enable this option to load paths from Isolario project. Note that loading
-                                data from Isolario can be slow and may fails.</span>
-                        </div>
                         <div class="option">
                             <input type="checkbox" id="use_routeview"> <label for="use_routeview">Include RouteViews
                                 data</label>

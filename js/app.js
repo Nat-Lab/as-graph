@@ -5,11 +5,11 @@
     var querybtn = document.getElementById('querybtn');
     var jumpbtn = document.getElementById('jumpbtn');
     var query = document.getElementById('query');
+    var paths_filter = document.getElementById('paths_filter');
 
     var level = document.getElementById('level');
     var targets = document.getElementById('targets');
 
-    var use_isolario = document.getElementById('use_isolario');
     var use_routeview = document.getElementById('use_routeview');
     var use_asname = document.getElementById('use_asname');
     var vertical_graph = document.getElementById('vertical_graph');
@@ -25,12 +25,10 @@
 
     var paths_cache = {};
     var prefixes_cache = {};
-    var isolario_cache = {};
     var routeview_cache = {};
     var asname_cache;
 
     try {
-        use_isolario.checked = localStorage.use_isolario === "true";
         use_routeview.checked = localStorage.use_routeview === "true";
         use_asname.checked = localStorage.use_asname === "true";
         vertical_graph.checked = localStorage.vertical_graph === "true";
@@ -87,8 +85,7 @@
     ];
 
     jumpbtn.onclick = () => display.scrollIntoView();
-    query.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } });
-    targets.addEventListener('keyup', e => { if (e.key === "Enter") { querybtn.click(); } });
+    [query, targets, paths_filter].forEach(node => node.addEventListener('keyup', e => { if (e.key === 'Enter') { querybtn.click(); } }));
 
     var isElementXPercentInViewport = function (el, percentVisible) {
         var rect = el.getBoundingClientRect();
@@ -101,7 +98,6 @@
     };
 
     var saveOptions = () => {
-        localStorage.use_isolario = use_isolario.checked;
         localStorage.use_asname = use_asname.checked;
         localStorage.vertical_graph = vertical_graph.checked;
         localStorage.group_large_isps = group_large_isps.checked;
@@ -118,11 +114,11 @@
 
     level.addEventListener('change', level_change);
 
-    [use_isolario, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(o => o.addEventListener('change', saveOptions));
+    [use_routeview, use_asname, vertical_graph, group_large_isps].forEach(o => o.addEventListener('change', saveOptions));
 
     var disable = () => {
         lock = true;
-        [querybtn, cscbtn, cpcbtn, query, level, targets, use_isolario, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = true);
+        [querybtn, cscbtn, cpcbtn, query, level, targets, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = true);
         details.className = 'box infobox hide';
         prefixinfo.className = 'hide';
         asinfo.className = 'hide';
@@ -135,7 +131,7 @@
         lock = false;
         details.className = 'box infobox';
         display.className = '';
-        [querybtn, cscbtn, cpcbtn, query, level, targets, use_isolario, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = false);
+        [querybtn, cscbtn, cpcbtn, query, level, targets, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = false);
         querybtn.innerText = 'Go';
     };
 
@@ -323,25 +319,6 @@
             }
         }));
 
-        if (poas.join(',').includes('/') && use_isolario.checked) {
-            // fixme
-            var isolario_query = poas.join('\n');
-            m_log(`getPrefixesByAs: getting paths list from isolario...`);
-
-            var isolario_paths;
-            if (!isolario_cache[isolario_query]) {
-                isolario_paths = await thirdPartyGetPaths('isolario', isolario_query);
-                isolario_cache[isolario_query] = isolario_paths;
-                m_log(`getPrefixesByAs: done, got ${isolario_paths.length} path(s) from isolario.`);
-            } else {
-                isolario_paths = isolario_cache[isolario_query];
-                m_log(`getPrefixesByAs: done, got ${isolario_paths.length} path(s) from isolario (cached).`);
-            }
-
-            paths = paths.concat(isolario_paths);
-        }
-
-        // todo
         if (poas.join(',').includes('/') && use_routeview.checked) {
             // fixme
             var routeview_query = poas.join('\n');
@@ -364,8 +341,11 @@
         var asns = new Set();
         var edges = new Set();
 
+        var path_filter = paths_filter.value.replace(/(as| )/gi, '').split(',').filter(s => s != '');
+
         paths.forEach(path => {
             if (ignore_path[lvl](path)) return;
+            if (path_filter.length > 0 && !path.some(asn => path_filter.includes(asn))) return;
             var last;
             var pos = 0;
             path.forEach((asn, i, a) => {
