@@ -360,7 +360,7 @@
 
         var peer_counts = {};
         var asns = new Set();
-        var edges = new Set();
+        var edges = {};
 
         var path_filter = paths_filter.value.replace(/(as| )/gi, '').split(',').filter(s => s != '');
 
@@ -378,7 +378,9 @@
                     }
                     asns.add(last);
                     asns.add(asn);
-                    edges.add(`${last},${asn}`);
+                    if (!edges[`${last},${asn}`]) {
+                        edges[`${last},${asn}`] = 1;
+                    } else edges[`${last},${asn}`]++;
                 }
                 last = asn;
             });
@@ -417,11 +419,11 @@
             peerstable.appendChild(tr);
         });
 
-        edges.forEach(edge => {
+        Object.keys(edges).forEach(edge => {
             var [src, dst] = edge.split(',');
             var src_name = as_names[src].split(' ')[0];
             var dst_name = as_names[dst].split(' ')[0];
-            var line = use_asname.checked ? `"${src_name}"->"${dst_name}"` : `AS${src}->AS${dst}`;
+            var line = use_asname.checked ? `"${src_name}"->"${dst_name}" [label = \"${edges[edge]}\"]` : `AS${src}->AS${dst} [label = \"${edges[edge]}\"]`;
             if (group_large_isps.checked && large_isps.includes(src)) isp_cluster.add(use_asname.checked ? `"${src_name}"` : `AS${src}`);
             if (group_large_isps.checked && large_isps.includes(dst)) isp_cluster.add(use_asname.checked ? `"${dst_name}"` : `AS${dst}`);
             links.add(line);
