@@ -6,6 +6,7 @@
     var jumpbtn = document.getElementById('jumpbtn');
     var query = document.getElementById('query');
     var paths_filter = document.getElementById('paths_filter');
+    var min_paths = document.getElementById('min_paths');
 
     var level = document.getElementById('level');
     var targets = document.getElementById('targets');
@@ -88,7 +89,7 @@
     ];
 
     jumpbtn.onclick = () => display.scrollIntoView();
-    [query, targets, paths_filter].forEach(node => node.addEventListener('keyup', e => { if (e.key === 'Enter') { querybtn.click(); } }));
+    [query, targets, paths_filter, min_paths].forEach(node => node.addEventListener('keyup', e => { if (e.key === 'Enter') { querybtn.click(); } }));
 
     var isElementXPercentInViewport = function (el, percentVisible) {
         var rect = el.getBoundingClientRect();
@@ -122,7 +123,7 @@
 
     var disable = () => {
         lock = true;
-        [querybtn, cscbtn, cpcbtn, query, level, targets, show_downstreams, use_routeview, use_asname, vertical_graph, group_large_isps, paths_filter].forEach(e => e.disabled = true);
+        [querybtn, cscbtn, cpcbtn, query, level, targets, show_downstreams, use_routeview, use_asname, vertical_graph, group_large_isps, paths_filter, min_paths].forEach(e => e.disabled = true);
         details.className = 'box infobox hide';
         prefixinfo.className = 'hide';
         asinfo.className = 'hide';
@@ -135,7 +136,7 @@
         lock = false;
         details.className = 'box infobox';
         display.className = '';
-        [querybtn, cscbtn, cpcbtn, query, level, targets, show_downstreams, use_routeview, use_asname, vertical_graph, group_large_isps, paths_filter].forEach(e => e.disabled = false);
+        [querybtn, cscbtn, cpcbtn, query, level, targets, show_downstreams, use_routeview, use_asname, vertical_graph, group_large_isps, paths_filter, min_paths].forEach(e => e.disabled = false);
         querybtn.innerText = 'Go';
     };
 
@@ -359,10 +360,12 @@
         }
 
         var peer_counts = {};
-        var asns = new Set();
+        var asns = {};
         var edges = {};
 
         var path_filter = paths_filter.value.replace(/(as| )/gi, '').split(',').filter(s => s != '');
+        var min_paths_val = Number.parseInt(min_paths.value);
+        min_paths_val = isNaN(min_paths_val) ? 25 : min_paths_val;
 
         paths.forEach(path => {
             if (ignore_path[lvl](path)) return;
@@ -376,8 +379,13 @@
                         if (!peer_counts[asn]) peer_counts[asn] = 1;
                         else peer_counts[asn]++;
                     }
-                    asns.add(last);
-                    asns.add(asn);
+                    
+                    if (!asns[last]) asns[last] = 1;
+                    else asns[last]++;
+
+                    if (!asns[asn]) asns[asn] = 1;
+                    else asns[asn]++;
+                    
                     if (!edges[`${last},${asn}`]) {
                         edges[`${last},${asn}`] = 1;
                     } else edges[`${last},${asn}`]++;
@@ -389,7 +397,7 @@
         var links = new Set();
         var isp_cluster = new Set();
 
-        var asns_arr = Array.from(asns);
+        var asns_arr = Object.keys(asns);
 
         m_log(`getPrefixesByAs: getting names for ${asns_arr.length} asn(s).`);
         var as_names = await getAsNames(asns_arr);
@@ -419,17 +427,23 @@
             peerstable.appendChild(tr);
         });
 
+        var nodes = new Set();
+
         Object.keys(edges).forEach(edge => {
             var [src, dst] = edge.split(',');
             var src_name = as_names[src].split(' ')[0];
             var dst_name = as_names[dst].split(' ')[0];
-            var line = use_asname.checked ? `"${src_name}"->"${dst_name}" [label = \"${edges[edge]}\"]` : `AS${src}->AS${dst} [label = \"${edges[edge]}\"]`;
-            if (group_large_isps.checked && large_isps.includes(src)) isp_cluster.add(use_asname.checked ? `"${src_name}"` : `AS${src}`);
-            if (group_large_isps.checked && large_isps.includes(dst)) isp_cluster.add(use_asname.checked ? `"${dst_name}"` : `AS${dst}`);
-            links.add(line);
+            if (edges[edge] >= min_paths_val) {
+                nodes.add(src);
+                nodes.add(dst);
+                var line = use_asname.checked ? `"${src_name}"->"${dst_name}" [label = \"${edges[edge]}\"]` : `AS${src}->AS${dst} [label = \"${edges[edge]}\"]`;
+                if (group_large_isps.checked && large_isps.includes(src)) isp_cluster.add(use_asname.checked ? `"${src_name}"` : `AS${src}`);
+                if (group_large_isps.checked && large_isps.includes(dst)) isp_cluster.add(use_asname.checked ? `"${dst_name}"` : `AS${dst}`);
+                links.add(line);
+            }
         });
 
-        asns_arr.forEach(asn => {
+        nodes.forEach(asn => {
             if (use_asname.checked) links.add(`"${as_names[asn].split(' ')[0]}" [URL="#AS${asn}" tooltip="AS${asn}" shape=rectangle ${group_large_isps.checked && large_isps.includes(asn) ? 'style=filled' : ''}]`);
             else links.add(`AS${asn} [URL="#AS${asn}" tooltip="${as_names[asn].replace(/"/g, `\\"`)}" ${group_large_isps.checked && large_isps.includes(asn) ? 'style=filled' : ''}]`);
         });
