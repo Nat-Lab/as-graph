@@ -118,7 +118,7 @@
 
     var disable = () => {
         lock = true;
-        [querybtn, cscbtn, cpcbtn, query, level, targets, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = true);
+        [querybtn, cscbtn, cpcbtn, query, level, targets, use_routeview, use_asname, vertical_graph, group_large_isps, paths_filter].forEach(e => e.disabled = true);
         details.className = 'box infobox hide';
         prefixinfo.className = 'hide';
         asinfo.className = 'hide';
@@ -131,7 +131,7 @@
         lock = false;
         details.className = 'box infobox';
         display.className = '';
-        [querybtn, cscbtn, cpcbtn, query, level, targets, use_routeview, use_asname, vertical_graph, group_large_isps].forEach(e => e.disabled = false);
+        [querybtn, cscbtn, cpcbtn, query, level, targets, use_routeview, use_asname, vertical_graph, group_large_isps, paths_filter].forEach(e => e.disabled = false);
         querybtn.innerText = 'Go';
     };
 
