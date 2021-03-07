@@ -10,6 +10,7 @@
     var level = document.getElementById('level');
     var targets = document.getElementById('targets');
 
+    var show_downstreams = document.getElementById('show_downstreams');
     var use_routeview = document.getElementById('use_routeview');
     var use_asname = document.getElementById('use_asname');
     var vertical_graph = document.getElementById('vertical_graph');
@@ -25,10 +26,12 @@
 
     var paths_cache = {};
     var prefixes_cache = {};
+    var downstream_prefixes_cache = {};
     var routeview_cache = {};
     var asname_cache;
 
     try {
+        show_downstreams.checked = localStorage.show_downstreams === "true";
         use_routeview.checked = localStorage.use_routeview === "true";
         use_asname.checked = localStorage.use_asname === "true";
         vertical_graph.checked = localStorage.vertical_graph === "true";
@@ -102,6 +105,7 @@
         localStorage.vertical_graph = vertical_graph.checked;
         localStorage.group_large_isps = group_large_isps.checked;
         localStorage.use_routeview = use_routeview.checked;
+        localStorage.show_downstreams = show_downstreams.checked;
     };
 
     var level_change = () => {
@@ -114,11 +118,11 @@
 
     level.addEventListener('change', level_change);
 
-    [use_routeview, use_asname, vertical_graph, group_large_isps].forEach(o => o.addEventListener('change', saveOptions));
+    [use_routeview, show_downstreams, use_asname, vertical_graph, group_large_isps].forEach(o => o.addEventListener('change', saveOptions));
 
     var disable = () => {
         lock = true;
-        [querybtn, cscbtn, cpcbtn, query, level, targets, use_routeview, use_asname, vertical_graph, group_large_isps, paths_filter].forEach(e => e.disabled = true);
+        [querybtn, cscbtn, cpcbtn, query, level, targets, show_downstreams, use_routeview, use_asname, vertical_graph, group_large_isps, paths_filter].forEach(e => e.disabled = true);
         details.className = 'box infobox hide';
         prefixinfo.className = 'hide';
         asinfo.className = 'hide';
@@ -131,7 +135,7 @@
         lock = false;
         details.className = 'box infobox';
         display.className = '';
-        [querybtn, cscbtn, cpcbtn, query, level, targets, use_routeview, use_asname, vertical_graph, group_large_isps, paths_filter].forEach(e => e.disabled = false);
+        [querybtn, cscbtn, cpcbtn, query, level, targets, show_downstreams, use_routeview, use_asname, vertical_graph, group_large_isps, paths_filter].forEach(e => e.disabled = false);
         querybtn.innerText = 'Go';
     };
 
@@ -219,11 +223,28 @@
         return { ...names, ...cache_hit };
     };
 
+    var getDownstreamPrefixes = function(as) {
+        querybtn.innerText = `Loading downstream prefixes for ${as}...`;
+
+        return new Promise((resolve, reject) => {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', `https://api2.nat.moe/inpath.api?${as}`);
+            xhr.onload = function () {
+                if (this.status == 200) {
+                    resolve(xhr.response.split('\n').filter(p => p.length > 1));
+                } else reject('API: got non-200 response.');
+            };
+            xhr.onerror = () => reject('API: XHR failed. Check your input, or try again later.');
+            xhr.send(as);
+        });
+    };
+
     var renderByPrefixesOrAddresses = async function (poas, as) {
         querybtn.innerText = 'Loading paths...';
         var lvl = level.value;
         var paths = [];
         as = as ? as : '';
+        console.log(poas);
 
         if (poas.length == 1) {
             var poa = poas[0];
@@ -433,6 +454,7 @@
         m_log(`getPrefixesByAs: getting prefixes list for ${as}...`);
 
         var prefixes;
+        var downstream_prefixes = [];
 
         if (!prefixes_cache[as]) {
             var rslt = await ripeGet(`announced-prefixes/data.json?resource=${as}`);
@@ -442,6 +464,18 @@
         } else {
             prefixes = prefixes_cache[as];
             m_log(`getPrefixesByAs: done, found ${prefixes.length} prefix(es) (cached).`);
+        }
+
+        if (show_downstreams.checked) {
+            paths_filter.value = as;
+            if (!downstream_prefixes_cache[as]) {
+                downstream_prefixes = await getDownstreamPrefixes(as);
+                downstream_prefixes_cache[as] = downstream_prefixes;
+                m_log(`getPrefixesByAs: done, found ${downstream_prefixes.length} downstream prefix(es).`);
+            } else {
+                downstream_prefixes = downstream_prefixes_cache[as];
+                m_log(`getPrefixesByAs: done, found ${downstream_prefixes.length} downstream prefix(es) (cached).`);
+            }
         }
 
         var prxtable = document.getElementById('asninfo_announced');
@@ -503,6 +537,13 @@
         }
 
         await renderByPrefixesOrAddresses(prefixes.map(p => p.prefix), as);
+        if (downstream_prefixes.length > 0 && downstream_prefixes.length <= 5000) {
+            await renderByPrefixesOrAddresses(downstream_prefixes);
+        }
+
+        if (downstream_prefixes.length > 5000) {
+            alert(`cannot determine downstreams of ${as}; it might be a feeder to one of the collectors, or have too many downstreams.`);
+        }
     };
 
     var doQuery = async function (target) {
@@ -565,6 +606,7 @@
 
     cscbtn.onclick = () => {
         prefixes_cache = {};
+        downstream_prefixes_cache = {};
         paths_cache = {};
         isolario_cache = {};
         routeview_cache = {};

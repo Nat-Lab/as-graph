@@ -64,11 +64,18 @@
                 <div class="control">
                     <div class="panel">
                         <div class="option">
+                            <input type="checkbox" id="show_downstreams"> <label for="show_downstreams">Include
+                                downstreams</label>
+                            <span class="option_descr">By default, <span class="mono">as-graph</span> shows the
+                            propagation of routes originated by the given ASN only. Enable this to include downstream
+                            routes. Note that this can be slow and may fail.</span>
+                        </div>
+                        <div class="option">
                             <input type="checkbox" id="use_routeview"> <label for="use_routeview">Include RouteViews
                                 data</label>
                             <span class="option_descr">By default, <span class="mono">as-graph</span> takes data from
                                 RIPE RIS only. Enable this option to load paths from RouteViews project. Note that
-                                loading data from RouteViews can be slow and may fails.</span>
+                                loading data from RouteViews can be slow and may fail.</span>
                         </div>
                         <div class="option">
                             <input type="checkbox" id="use_asname"> <label for="use_asname">Show <span
